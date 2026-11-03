@@ -81,6 +81,10 @@ nav .pill.pill-line:hover{background:var(--paper);color:var(--ink);filter:none}
 .hl .win{display:block;position:relative;overflow:hidden;width:fit-content;height:1.25em;padding-bottom:.16em;color:var(--accent-light)}
 .hl .win .wd{position:absolute;left:0;top:0;white-space:pre}
 .hl .win .c{display:inline-block;will-change:transform;transform-origin:50% 100%}
+@media (min-width:800px){
+  .hero h1.hl{white-space:nowrap}
+  .hl .win{display:inline-block;vertical-align:top;height:1.02em;padding-bottom:.2em;margin-bottom:-.2em}
+}
 .hl .win .bar{position:absolute;left:0;bottom:.05em;height:.08em;width:100%;background:var(--accent);transform-origin:left;border-radius:2px}
 .hero .sub{font-size:clamp(18px,1.6vw,22px);color:#C9CCD0;max-width:none;margin:28px 0 0;text-wrap:pretty}
 .hero .small{font-size:15px;color:#A3A8AE;margin:20px 0 0;max-width:none;text-wrap:pretty}
@@ -497,7 +501,7 @@ footer .fine{margin:10px 0 0;font-size:12px;color:#8A9096}
   <section id="top" class="w hero">
     <div>
       <p class="kicker">Games producer · remote, worldwide</p>
-      <h1 class="hl" id="headline" aria-label="Make your launch date real.">Make your<span class="win" id="win" aria-hidden="true">launch date</span><span aria-hidden="true">real.</span></h1>
+      <h1 class="hl" id="headline" aria-label="Make your launch date real.">Make your <span class="win" id="win" aria-hidden="true">launch date</span> <span aria-hidden="true">real.</span></h1>
       <p class="sub">I’m a games producer: I plan the work, keep your team and publisher aligned, and lead delivery from brief to launch. With 10+ years shipping across VR, console, PC and mobile, I take projects from contract to vertical slice and through certification and first-party pipelines, with milestones on time and within budget. On Thief VR, licensor review went from two weeks to three days.</p>
       <div class="ctas">
         <a class="btn btn-main" href="#offers" data-pick="studio">I’m a studio or publisher</a>
