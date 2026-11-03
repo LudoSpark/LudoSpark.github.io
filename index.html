@@ -362,6 +362,12 @@ footer .fine{margin:10px 0 0;font-size:12px;color:#8A9096}
   .work .card .meta,.work .card .more{display:none}
   .work,.work.featured{gap:10px}
 }
+@media (min-width:561px){
+  .tiles.three{grid-template-columns:repeat(3,1fr)}
+}
+@media (max-width:560px){
+  .tiles.three .tile:last-child{grid-column:1/-1}
+}
 @media (max-width:1100px){
   nav .hide{display:none}
   .menu-btn{display:grid}
@@ -454,7 +460,7 @@ footer .fine{margin:10px 0 0;font-size:12px;color:#8A9096}
   .fit .grid2 > div.open ul{display:flex}
   .cta-band{margin-top:28px;padding:16px;gap:10px}
   .cta-band p{font-size:18px}
-  .contact .links a,footer .w a{display:inline-block;padding:12px 4px}
+  .contact .links a,footer .w a{display:inline-block;padding:12px 0}
 }
 </style>
 </head>
@@ -877,10 +883,10 @@ footer .fine{margin:10px 0 0;font-size:12px;color:#8A9096}
     </ol>
     <p class="rail-note">The first three steps are the one-week project assessment. You keep the notes whatever you decide next.</p>
     <h3 class="sub-head">What’s in the notes</h3>
-    <div class="tiles">
+    <div class="tiles three">
       <div class="tile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg><b>Where you really are</b><span>An honest read</span></div>
       <div class="tile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><b>What a publisher will question first</b><span>So you can answer it before they ask</span></div>
-      <div class="tile wide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg><b>What to fix</b><span>Before you pitch or apply</span></div>
+      <div class="tile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg><b>What to fix</b><span>Before you pitch or apply</span></div>
     </div>
     <h3 class="sub-head">If you keep mentoring</h3>
     <div class="item"><p>Two 60-minute calls a month, and messages answered within 48 hours in between. I learn your project, track your plan with you, and flag early when it needs adjusting. The assessment fee is credited, and you can cancel any time.</p></div>
