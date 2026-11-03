@@ -201,7 +201,7 @@ dialog.story::backdrop{background:rgba(17,20,24,.65)}
 .story .card .meta{margin-top:0;margin-left:0}
 .story .card h3{margin-left:0;font-size:26px}
 .story .card .hook{flex:none;font-size:17px;margin-left:0;margin-top:8px}
-.story .card .story-cta{grid-column:1;margin-top:24px}
+.story .story-cta{position:sticky;bottom:0;z-index:1;padding:14px 28px calc(14px + env(safe-area-inset-bottom));background:var(--white);border-top:1px solid var(--line)}
 .story .full{grid-column:1/-1;margin:24px 0 0;max-width:68ch;display:flex;flex-direction:column;gap:14px;font-size:17px;line-height:1.6;color:var(--text)}
 .story .full p{margin:0}
 .story .story-cta a{display:inline-flex;align-items:center;gap:8px;min-height:48px;padding:12px 22px;border-radius:8px;background:var(--accent);color:var(--white);font-weight:600;text-decoration:none;transition:filter .15s,transform .15s}
@@ -213,7 +213,9 @@ dialog.story::backdrop{background:rgba(17,20,24,.65)}
 @media (max-width:560px){
   .story .card{grid-template-columns:1fr;padding:20px}
   .story .card .pic{grid-column:1;grid-row:auto;max-width:none;margin-bottom:16px}
-  .story .card .meta,.story .card h3,.story .card .hook,.story .card .story-cta{grid-column:1}
+  .story .card .meta,.story .card h3,.story .card .hook{grid-column:1}
+  .story .story-cta{padding:12px 20px calc(12px + env(safe-area-inset-bottom))}
+  .story .story-cta a{width:100%;justify-content:center}
 }
 
 /* proof, steps, fit */
@@ -1073,6 +1075,7 @@ footer .fine{margin:10px 0 0;font-size:12px;color:#8A9096}
       copy.removeChild(copy.querySelector('.more'));
       copy.appendChild(full.cloneNode(true));
       var link = copy.querySelector('.full a');
+      var trailer = null;
       if (link) {
         link.target = '_blank';
         link.rel = 'noopener';
@@ -1081,10 +1084,11 @@ footer .fine{margin:10px 0 0;font-size:12px;color:#8A9096}
         var holder = link.parentElement;
         cta.appendChild(link);
         if (holder && holder.tagName === 'P' && !holder.textContent.trim()) holder.remove();
-        copy.appendChild(cta);
+        trailer = cta;
       }
       body.innerHTML = '';
       body.appendChild(copy);
+      if (trailer) body.appendChild(trailer);
       dlg.setAttribute('aria-label', card.querySelector('h3').textContent);
       dlg.showModal();
       dlg.scrollTop = 0;
