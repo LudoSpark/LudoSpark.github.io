@@ -78,6 +78,12 @@ nav .pill.pill-line:hover{background:var(--paper);color:var(--ink);filter:none}
 /* hero */
 .hero{display:grid;grid-template-columns:.8fr 1.2fr;gap:clamp(32px,4vw,56px);align-items:center;padding-top:clamp(8px,1.5vw,20px);padding-bottom:clamp(40px,5vw,64px)}
 .hero h1{font-size:clamp(44px,5.2vw,72px);line-height:1.02;letter-spacing:-0.025em}
+.hl{display:grid}
+.hl .v{grid-area:1/1;visibility:hidden;opacity:0}
+.hl .v.on{visibility:visible;opacity:1;animation:hlin .4s ease-out}
+@keyframes hlin{from{opacity:0}}
+.hl b{font-weight:inherit;color:var(--accent-light)}
+@media (prefers-reduced-motion:reduce){.hl .v.on{animation:none}}
 .hero .sub{font-size:clamp(18px,1.6vw,22px);color:#C9CCD0;max-width:none;margin:28px 0 0;text-wrap:pretty}
 .hero .small{font-size:15px;color:#A3A8AE;margin:20px 0 0;max-width:none;text-wrap:pretty}
 .hero figure{margin:0}
@@ -493,7 +499,7 @@ footer .fine{margin:10px 0 0;font-size:12px;color:#8A9096}
   <section id="top" class="w hero">
     <div>
       <p class="kicker">Games producer · remote, worldwide</p>
-      <h1>Make your launch date real.</h1>
+      <h1 class="hl" id="headline"><span class="v on">Make your <b>launch date</b> real.</span><span class="v">Make your <b>milestone</b> real.</span><span class="v">Make your <b>vertical slice</b> real.</span><span class="v">Make your <b>publisher pitch</b> real.</span><span class="v">Make your <b>certification date</b> real.</span></h1>
       <p class="sub">I’m a games producer: I plan the work, keep your team and publisher aligned, and lead delivery from brief to launch. With 10+ years shipping across VR, console, PC and mobile, I take projects from contract to vertical slice and through certification and first-party pipelines, with milestones on time and within budget. On Thief VR, licensor review went from two weeks to three days.</p>
       <div class="ctas">
         <a class="btn btn-main" href="#offers" data-pick="studio">I’m a studio or publisher</a>
@@ -1101,6 +1107,46 @@ footer .fine{margin:10px 0 0;font-size:12px;color:#8A9096}
     });
     d.replaceWith(btn);
   });
+})();
+
+// Headline: the last words cycle once through the moments I cover, then settle on "launch date".
+// Choosing an audience (hero buttons, tabs or ?for=studio / ?for=indie) locks the matching wording.
+(function () {
+  var h = document.getElementById('headline');
+  if (!h) return;
+  var vs = Array.prototype.slice.call(h.querySelectorAll('.v'));
+  var pick = { studio: 1, indie: 3 };
+  var i = 0, timer = null, locked = false, paused = false;
+  function show(n) {
+    vs[i].classList.remove('on');
+    i = n;
+    vs[i].classList.add('on');
+  }
+  function lock(aud) {
+    locked = true;
+    clearTimeout(timer);
+    if (pick[aud] !== undefined) show(pick[aud]);
+  }
+  function step() {
+    if (locked) return;
+    if (paused) { timer = setTimeout(step, 600); return; }
+    if (i === vs.length - 1) { show(0); return; }
+    show(i + 1);
+    timer = setTimeout(step, 3200);
+  }
+  document.querySelectorAll('[data-tab]').forEach(function (b) {
+    b.addEventListener('click', function () { lock(b.dataset.tab); });
+  });
+  h.addEventListener('mouseenter', function () { paused = true; });
+  h.addEventListener('mouseleave', function () { paused = false; });
+  h.addEventListener('click', function () { locked = true; clearTimeout(timer); });
+  var m = /[?&]for=(studio|indie)/.exec(location.search);
+  if (m) {
+    var t = document.querySelector('[data-tab="' + m[1] + '"]');
+    if (t) setTimeout(function () { t.click(); }, 0);
+  } else if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    timer = setTimeout(step, 3200);
+  }
 })();
 
 // Hero buttons pick the matching audience tab
