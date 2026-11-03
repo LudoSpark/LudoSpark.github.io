@@ -66,7 +66,7 @@ p,li,figcaption,summary{text-wrap:balance}
 
 /* header */
 header{display:flex;justify-content:space-between;align-items:center;gap:16px;max-width:1240px;margin:0 auto;padding:22px var(--gutter)}
-.logo{font-family:var(--display);font-weight:800;font-size:34px;letter-spacing:-0.02em;text-decoration:none}
+.logo{font-family:var(--display);font-weight:800;font-size:34px;letter-spacing:-0.02em;text-decoration:none;white-space:nowrap}
 nav{display:flex;gap:36px;align-items:center;font-size:19px;font-weight:500}
 nav a{text-decoration:none}
 nav a:not(.pill):hover{color:var(--accent-light)}
@@ -76,7 +76,7 @@ nav .pill.pill-line{background:transparent;border:1.5px solid var(--paper);color
 nav .pill.pill-line:hover{background:var(--paper);color:var(--ink);filter:none}
 
 /* hero */
-.hero{display:grid;grid-template-columns:1.05fr 1fr;gap:clamp(40px,6vw,88px);align-items:center;padding-top:clamp(8px,1.5vw,20px);padding-bottom:clamp(40px,5vw,64px)}
+.hero{display:grid;grid-template-columns:.8fr 1.2fr;gap:clamp(32px,4vw,56px);align-items:center;padding-top:clamp(8px,1.5vw,20px);padding-bottom:clamp(40px,5vw,64px)}
 .hero h1{font-size:clamp(44px,5.2vw,72px);line-height:1.02;letter-spacing:-0.025em}
 .hero .sub{font-size:clamp(18px,1.6vw,22px);color:#C9CCD0;max-width:none;margin:28px 0 0;text-wrap:pretty}
 .hero .small{font-size:15px;color:#A3A8AE;margin:20px 0 0;max-width:none;text-wrap:pretty}
@@ -190,16 +190,16 @@ nav .pill.pill-line:hover{background:var(--paper);color:var(--ink);filter:none}
 .card .more::after{content:" \2192"}
 .card .more:hover{text-decoration:underline}
 body:has(dialog[open]){overflow:hidden}
-dialog.story{width:min(760px,calc(100% - 32px));max-height:calc(100dvh - 48px);padding:0;border:1px solid var(--line);border-radius:var(--radius);background:var(--white);color:var(--ink);box-shadow:0 30px 80px -20px rgba(0,0,0,.5);overflow:auto}
+dialog.story{width:min(820px,calc(100% - 32px));max-height:calc(100dvh - 48px);padding:0;border:1px solid var(--line);border-radius:var(--radius);background:var(--white);color:var(--ink);box-shadow:0 30px 80px -20px rgba(0,0,0,.5);overflow:auto}
 dialog.story::backdrop{background:rgba(17,20,24,.65)}
 .story .card{border:0;border-radius:0;box-shadow:none;transform:none}
-.story .card{display:grid;grid-template-columns:300px 1fr;column-gap:28px;align-items:start;padding:28px}
-.story .card .pic{grid-column:1;grid-row:1/5;padding:0;border:1px solid var(--line);border-radius:8px}
-.story .card .meta,.story .card h3,.story .card .hook{grid-column:2;margin-right:40px}
+.story .card{display:grid;grid-template-columns:1fr;align-items:start;padding:28px}
+.story .card .pic{grid-column:1;grid-row:auto;max-width:none;margin-bottom:20px;padding:0;border:1px solid var(--line);border-radius:8px}
+.story .card .meta,.story .card h3,.story .card .hook{grid-column:1;margin-right:40px}
 .story .card .meta{margin-top:0;margin-left:0}
 .story .card h3{margin-left:0;font-size:26px}
 .story .card .hook{flex:none;font-size:17px;margin-left:0;margin-top:8px}
-.story .card .story-cta{grid-column:2;margin-top:16px}
+.story .card .story-cta{grid-column:1;margin-top:16px}
 .story .full{grid-column:1/-1;margin:24px 0 0;max-width:68ch;display:flex;flex-direction:column;gap:14px;font-size:17px;line-height:1.6;color:var(--text)}
 .story .full p{margin:0}
 .story .story-cta a{display:inline-flex;align-items:center;gap:8px;min-height:48px;padding:12px 22px;border-radius:8px;background:var(--accent);color:var(--white);font-weight:600;text-decoration:none;transition:filter .15s,transform .15s}
@@ -283,11 +283,10 @@ footer .fine{margin:10px 0 0;font-size:12px;color:#8A9096}
 .faq-item[open] summary::after{transform:rotate(45deg)}
 .faq-item p{margin:0;padding:0 24px 22px;max-width:70ch;color:var(--text)}
 
-.subtabs{display:flex;gap:6px;border-bottom:1px solid var(--line);margin:0 0 36px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none}
-.subtabs::-webkit-scrollbar{display:none}
-.subtabs button{background:none;border:0;border-bottom:3px solid transparent;margin-bottom:-1px;padding:12px 16px;min-height:48px;font-family:var(--display);font-weight:800;font-size:18px;color:var(--muted);cursor:pointer;white-space:nowrap}
-.subtabs button:hover{color:var(--ink)}
-.subtabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.subtabs{display:flex;gap:10px;margin:0 0 36px}
+.subtabs button{min-width:200px;min-height:56px;padding:0 28px;border:1.5px solid var(--ink);border-radius:8px;background:var(--white);color:var(--ink);font-family:var(--display);font-weight:800;font-size:20px;cursor:pointer;white-space:nowrap;transition:background .15s,color .15s}
+.subtabs button:hover{background:var(--paper)}
+.subtabs button[aria-selected="true"]{background:var(--ink);color:var(--paper)}
 .rail{list-style:none;margin:0 0 8px;padding:0 0 0 36px;position:relative;max-width:820px}
 .rail:before{content:"";position:absolute;left:11px;top:12px;bottom:28px;width:2px;background:var(--line)}
 .st{position:relative;background:var(--white);border:1px solid var(--line);border-radius:var(--radius);padding:16px 20px;margin:0 0 12px}
@@ -359,8 +358,25 @@ footer .fine{margin:10px 0 0;font-size:12px;color:#8A9096}
   .work .card .meta,.work .card .more{display:none}
   .work,.work.featured{gap:10px}
 }
+@media (max-width:1100px){
+  nav .hide{display:none}
+  .menu-btn{display:grid}
+  nav{gap:10px}
+  nav .pill .x{display:none}
+}
+@media (min-width:1101px){
+  .menu-btn,.mobile-menu{display:none!important}
+}
 @media (min-width:861px){
-  .menu-btn,.mobile-menu,.dock{display:none!important}
+  .dock{display:none!important}
+  .faq{max-width:none;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+  .faq-item summary{cursor:default;padding:24px 28px 8px}
+  .faq-item summary::after{content:none}
+  .faq-item p{max-width:none;padding:0 28px 26px}
+}
+@media (max-width:1240px){
+  nav{gap:22px}
+  nav .pill.pill-line{margin-right:-8px}
 }
 @media (max-width:420px){
   .logo{font-size:22px}
@@ -372,7 +388,7 @@ footer .fine{margin:10px 0 0;font-size:12px;color:#8A9096}
   p,li,figcaption,summary{text-wrap:pretty}
   .logo{white-space:nowrap}
   .subtabs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;border:0;margin:0 0 24px;overflow:visible}
-  .subtabs button{margin:0;min-height:52px;padding:10px 6px;border:1.5px solid var(--ink);border-radius:8px;background:var(--white);color:var(--ink);font-size:17px;line-height:1.1;white-space:normal}
+  .subtabs button{min-width:0;margin:0;min-height:52px;padding:10px 6px;border:1.5px solid var(--ink);border-radius:8px;background:var(--white);color:var(--ink);font-size:17px;line-height:1.1;white-space:normal}
   .subtabs button[aria-selected="true"]{background:var(--ink);border-color:var(--ink);color:var(--paper)}
   .subtabs button:hover{background:var(--paper)}
   .subtabs button[aria-selected="true"]:hover{background:var(--ink)}
@@ -442,6 +458,8 @@ footer .fine{margin:10px 0 0;font-size:12px;color:#8A9096}
       <a class="hide" href="#work">Work</a>
       <a class="hide" href="#about">About</a>
       <a class="hide" href="#offers">Offers</a>
+      <a class="hide" href="#how" data-go="how">How it works</a>
+      <a class="hide" href="#faq" data-go="faq">FAQ</a>
       <a class="pill pill-line hide email-link" href="mailto:savcic.andrej@gmail.com?subject=Enquiry">Email me</a>
       <a class="pill" href="https://cal.com/andrej-savcic/20min" target="_blank" rel="noopener">Book a<span class="x"> free</span> call</a>
       <button type="button" class="menu-btn" aria-expanded="false" aria-controls="mobile-menu" aria-label="Menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
@@ -1325,6 +1343,11 @@ document.querySelectorAll('[data-tab]').forEach(function (btn) {
       if (mq.matches) { row.tabIndex = 0; row.setAttribute('role', 'region'); row.setAttribute('aria-label', 'Swipe sideways for more'); }
       else { row.removeAttribute('tabindex'); row.removeAttribute('role'); row.removeAttribute('aria-label'); }
     });
+  });
+
+  document.querySelectorAll('.faq-item').forEach(function (item) {
+    item.querySelector('summary').addEventListener('click', function (e) { if (!mq.matches) e.preventDefault(); });
+    syncs.push(function () { item.open = !mq.matches; });
   });
 
   function syncAll() { syncs.forEach(function (f) { f(); }); }
