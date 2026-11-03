@@ -200,9 +200,6 @@ dialog.story::backdrop{background:rgba(17,20,24,.65)}
 .story .card h3{margin-left:0;font-size:26px}
 .story .card .hook{flex:none;font-size:17px;margin-left:0;margin-top:8px}
 .story .card .story-cta{grid-column:2;margin-top:16px}
-.story .pic .play{position:absolute;inset:0;display:grid;place-items:center;background:rgba(13,16,19,.22);transition:background .15s}
-.story .pic .play:hover{background:rgba(13,16,19,.42)}
-.story .pic .play svg{width:52px;height:52px;padding:14px;border-radius:50%;background:var(--accent);color:var(--white)}
 .story .full{grid-column:1/-1;margin:24px 0 0;max-width:68ch;display:flex;flex-direction:column;gap:14px;font-size:17px;line-height:1.6;color:var(--text)}
 .story .full p{margin:0}
 .story .story-cta a{display:inline-flex;align-items:center;gap:8px;min-height:48px;padding:12px 22px;border-radius:8px;background:var(--accent);color:var(--white);font-weight:600;text-decoration:none;transition:filter .15s,transform .15s}
@@ -1047,17 +1044,6 @@ footer .fine{margin:10px 0 0;font-size:12px;color:#8A9096}
         cta.appendChild(link);
         if (holder && holder.tagName === 'P' && !holder.textContent.trim()) holder.remove();
         copy.insertBefore(cta, copy.querySelector('.full'));
-        if (/^watch/i.test(link.textContent)) {
-          var play = document.createElement('a');
-          play.className = 'play';
-          play.href = link.href;
-          play.target = '_blank';
-          play.rel = 'noopener';
-          play.setAttribute('aria-label', link.textContent.trim());
-          play.setAttribute('tabindex', '-1');
-          play.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>';
-          copy.querySelector('.pic').appendChild(play);
-        }
       }
       body.innerHTML = '';
       body.appendChild(copy);
