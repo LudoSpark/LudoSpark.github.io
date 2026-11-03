@@ -78,10 +78,10 @@ nav .pill.pill-line:hover{background:var(--paper);color:var(--ink);filter:none}
 /* hero */
 .hero{display:grid;grid-template-columns:.8fr 1.2fr;gap:clamp(32px,4vw,56px);align-items:center;padding-top:clamp(8px,1.5vw,20px);padding-bottom:clamp(40px,5vw,64px)}
 .hero h1{font-size:clamp(44px,5.2vw,72px);line-height:1.02;letter-spacing:-0.025em}
-.hl{display:grid}
-.hl .v{grid-area:1/1;visibility:hidden;opacity:0}
-.hl .v.on{visibility:visible;opacity:1}
-.hl b{font-weight:inherit;color:var(--accent-light)}
+.hl .win{display:block;position:relative;overflow:hidden;width:fit-content;height:1.25em;padding-bottom:.16em;color:var(--accent-light)}
+.hl .win .wd{position:absolute;left:0;top:0;white-space:pre}
+.hl .win .c{display:inline-block;will-change:transform;transform-origin:50% 100%}
+.hl .win .bar{position:absolute;left:0;bottom:.05em;height:.08em;width:100%;background:var(--accent);transform-origin:left;border-radius:2px}
 .hero .sub{font-size:clamp(18px,1.6vw,22px);color:#C9CCD0;max-width:none;margin:28px 0 0;text-wrap:pretty}
 .hero .small{font-size:15px;color:#A3A8AE;margin:20px 0 0;max-width:none;text-wrap:pretty}
 .hero figure{margin:0}
@@ -497,7 +497,7 @@ footer .fine{margin:10px 0 0;font-size:12px;color:#8A9096}
   <section id="top" class="w hero">
     <div>
       <p class="kicker">Games producer · remote, worldwide</p>
-      <h1 class="hl" id="headline"><span class="v on">Make your <b>launch date</b> real.</span><span class="v">Make your <b>milestone</b> real.</span><span class="v">Make your <b>vertical slice</b> real.</span><span class="v">Make your <b>publisher pitch</b> real.</span><span class="v">Make your <b>certification date</b> real.</span></h1>
+      <h1 class="hl" id="headline" aria-label="Make your launch date real.">Make your<span class="win" id="win" aria-hidden="true">launch date</span><span aria-hidden="true">real.</span></h1>
       <p class="sub">I’m a games producer: I plan the work, keep your team and publisher aligned, and lead delivery from brief to launch. With 10+ years shipping across VR, console, PC and mobile, I take projects from contract to vertical slice and through certification and first-party pipelines, with milestones on time and within budget. On Thief VR, licensor review went from two weeks to three days.</p>
       <div class="ctas">
         <a class="btn btn-main" href="#offers" data-pick="studio">I’m a studio or publisher</a>
@@ -1108,40 +1108,86 @@ footer .fine{margin:10px 0 0;font-size:12px;color:#8A9096}
   });
 })();
 
-// Headline: the last words keep cycling through the moments I cover, animated with GSAP.
+// Headline: the last words roll through the moments I cover, animated with GSAP.
 // Choosing an audience (hero buttons, tabs or ?for=studio / ?for=indie) locks the matching wording.
 (function () {
-  var h = document.getElementById('headline');
-  if (!h) return;
-  var vs = Array.prototype.slice.call(h.querySelectorAll('.v'));
-  var pick = { studio: 1, indie: 3 };
-  var i = 0, timer = null, locked = false, paused = false;
+  var h = document.getElementById('headline'), win = document.getElementById('win');
   var g = window.gsap;
-  function show(n) {
-    if (n === i) return;
-    var out = vs[i], inn = vs[n];
-    vs.forEach(function (v) {
-      if (v !== out && v !== inn) { if (g) g.killTweensOf(v); v.classList.remove('on'); if (g) g.set(v, { clearProps: 'all' }); }
-    });
+  if (!h || !win || !g) return;
+  var words = ['launch date', 'milestone', 'vertical slice', 'publisher pitch', 'certification date'];
+  var pick = { studio: 1, indie: 3 };
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var els = [], chars = [], widths = [], i = 0, ready = false, locked = false, paused = false, pending = null, timer = null, tl = null, bar;
+  var rnd = function (a, b) { return a + Math.random() * (b - a); };
+
+  function measure() { widths = els.map(function (e) { return e.getBoundingClientRect().width; }); }
+  function schedule() {
+    if (locked || reduce) return;
+    timer = setTimeout(function () {
+      if (paused) { schedule(); return; }
+      go((i + 1) % words.length);
+    }, paused ? 600 : rnd(2400, 3600));
+  }
+  function done() {
+    if (pending !== null) { var n = pending; pending = null; go(n); } else schedule();
+  }
+  function go(n) {
+    if (n === i) { done(); return; }
+    var out = chars[i], inn = chars[n];
+    if (reduce) {
+      g.set(out, { yPercent: 170 }); g.set(inn, { yPercent: 0 }); g.set(win, { width: widths[n] }); g.set(bar, { scaleX: 1 });
+      i = n; return;
+    }
+    tl = g.timeline({ onComplete: done });
+    // anticipation: a small dip, then the launch
+    tl.to(out, { yPercent: 14, scaleY: 0.92, duration: 0.14, ease: 'power1.out', stagger: 0.012 });
+    tl.to(out, { yPercent: -170, scaleY: 1.25, rotation: function () { return rnd(-8, 4); }, duration: 0.4, ease: 'power3.in', stagger: { each: 0.018, from: 'start' } }, '>-0.02');
+    // arrival: letters ripple in with overshoot, then settle
+    tl.set(inn, { yPercent: 170, scaleY: 1.25, rotation: function () { return rnd(-6, 10); } }, '-=0.28');
+    tl.to(inn, { yPercent: 0, scaleY: 1, rotation: 0, duration: 0.75, ease: 'back.out(2.2)', stagger: { each: 0.03, from: 'start' } }, '<');
+    tl.to(inn, { scaleY: 0.9, scaleX: 1.06, duration: 0.09, ease: 'sine.out', yoyo: true, repeat: 1, stagger: { each: 0.03, from: 'start' } }, '<+0.32');
+    // the window adjusts a beat early, the underline lags behind
+    tl.to(win, { width: widths[n], duration: 0.7, ease: 'back.out(1.4)' }, '<-0.25');
+    tl.fromTo(bar, { scaleX: 0 }, { scaleX: 1, duration: 0.65, ease: 'expo.out' }, '<+0.35');
     i = n;
-    if (!g) { out.classList.remove('on'); inn.classList.add('on'); return; }
-    g.killTweensOf([out, inn]);
-    g.set(inn, { clearProps: 'all' });
-    inn.classList.add('on');
-    g.to(out, { opacity: 0, y: -14, duration: 0.3, ease: 'power2.in', onComplete: function () { out.classList.remove('on'); g.set(out, { clearProps: 'all' }); } });
-    g.fromTo(inn, { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.55, delay: 0.2, ease: 'power3.out', clearProps: 'all' });
   }
   function lock(aud) {
+    if (pick[aud] === undefined) return;
     locked = true;
     clearTimeout(timer);
-    if (pick[aud] !== undefined) show(pick[aud]);
+    if (!ready || (tl && tl.isActive())) { pending = pick[aud]; return; }
+    go(pick[aud]);
   }
-  function step() {
-    if (locked) return;
-    if (paused) { timer = setTimeout(step, 600); return; }
-    show((i + 1) % vs.length);
-    timer = setTimeout(step, 3200);
-  }
+
+  bar = document.createElement('span'); bar.className = 'bar';
+  win.textContent = '';
+  win.appendChild(bar);
+  words.forEach(function (t) {
+    var w = document.createElement('span'); w.className = 'wd';
+    chars.push(t.split('').map(function (ch) {
+      var c = document.createElement('span'); c.className = 'c'; c.textContent = ch; w.appendChild(c); return c;
+    }));
+    win.appendChild(w); els.push(w);
+  });
+  chars.forEach(function (cs, k) { if (k) g.set(cs, { yPercent: 170 }); });
+  var start = function () {
+    measure();
+    g.set(win, { width: widths[0] });
+    ready = true;
+    if (pending !== null) { var n = pending; pending = null; go(n); } else schedule();
+  };
+  (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(start);
+
+  var rt;
+  window.addEventListener('resize', function () {
+    clearTimeout(rt);
+    rt = setTimeout(function () {
+      if (!ready || (tl && tl.isActive())) return;
+      measure();
+      g.set(win, { width: widths[i] });
+    }, 150);
+  });
+
   document.querySelectorAll('[data-tab]').forEach(function (b) {
     b.addEventListener('click', function () { lock(b.dataset.tab); });
   });
@@ -1151,8 +1197,6 @@ footer .fine{margin:10px 0 0;font-size:12px;color:#8A9096}
   if (m) {
     var t = document.querySelector('[data-tab="' + m[1] + '"]');
     if (t) setTimeout(function () { t.click(); }, 0);
-  } else if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    timer = setTimeout(step, 3200);
   }
 })();
 
