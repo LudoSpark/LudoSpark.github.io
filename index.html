@@ -113,6 +113,17 @@ nav .pill.pill-line:hover{background:var(--paper);color:var(--ink);filter:none}
 .strip .row{display:grid;grid-template-columns:210px 1fr;gap:8px 24px;align-items:baseline}
 .strip .names{display:flex;flex-wrap:wrap;gap:6px 32px}
 .strip .names span{white-space:nowrap}
+.strip .marquee{display:block;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent);mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent)}
+.strip .track{display:flex;width:max-content;animation:roll 70s linear infinite}
+.strip .set{display:flex;flex-shrink:0;gap:32px;padding-right:32px}
+.strip .marquee:hover .track{animation-play-state:paused}
+@keyframes roll{to{transform:translateX(-50%)}}
+@media (prefers-reduced-motion:reduce){
+  .strip .marquee{overflow:visible;-webkit-mask-image:none;mask-image:none}
+  .strip .track{animation:none;width:auto}
+  .strip .set{flex-wrap:wrap;padding-right:0}
+  .strip .set[aria-hidden]{display:none}
+}
 .strip .note{margin:0;padding-top:16px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
 .strip span{font-family:var(--display);font-weight:700}
 .strip .label{font-family:var(--mono);font-weight:500;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
@@ -477,7 +488,7 @@ footer .fine{margin:10px 0 0;font-size:12px;color:#8A9096}
     <div>
       <p class="kicker">Games producer · remote, worldwide</p>
       <h1>Make your launch date real.</h1>
-      <p class="sub">I’m a games producer: I plan the work, keep your team and publisher aligned, and lead delivery from brief to launch. With 10+ years shipping across VR, console, PC and mobile, I take projects from contract to vertical slice and through certification and first-party pipelines. On Thief VR, licensor review went from two weeks to three days.</p>
+      <p class="sub">I’m a games producer: I plan the work, keep your team and publisher aligned, and lead delivery from brief to launch. With 10+ years shipping across VR, console, PC and mobile, I take projects from contract to vertical slice and through certification and first-party pipelines, with milestones on time and within budget. On Thief VR, licensor review went from two weeks to three days.</p>
       <div class="ctas">
         <a class="btn btn-main" href="#offers" data-pick="studio">I’m a studio or publisher</a>
         <a class="btn btn-line" href="#offers" data-pick="indie">I’m an indie team</a>
@@ -501,7 +512,7 @@ footer .fine{margin:10px 0 0;font-size:12px;color:#8A9096}
 <section class="strip" aria-label="Employers and clients">
   <div class="w">
     <div class="row"><span class="label">Delivered at</span><div class="names"><span>Sumo Digital</span><span>Maze Theory</span><span>22cans</span><span>PRELOADED</span><span>UNIT9</span></div></div>
-    <div class="row"><span class="label">For clients including</span><div class="names"><span>Turn 10</span><span>Microsoft</span><span>Curve Games</span></div></div>
+    <div class="row"><span class="label">For clients including</span><div class="names marquee"><div class="track"><div class="set"><span>Turn 10</span><span>Curve Games</span><span>Microsoft</span><span>McDonald’s</span><span>Verizon</span><span>BBC R&amp;D</span><span>Discovery</span><span>National Geographic</span><span>R/GA</span><span>London Transport Museum</span><span>Natural History Museum of Utah</span><span>University of Oxford</span><span>OMY</span></div><div class="set" aria-hidden="true"><span>Turn 10</span><span>Curve Games</span><span>Microsoft</span><span>McDonald’s</span><span>Verizon</span><span>BBC R&amp;D</span><span>Discovery</span><span>National Geographic</span><span>R/GA</span><span>London Transport Museum</span><span>Natural History Museum of Utah</span><span>University of Oxford</span><span>OMY</span></div></div></div></div>
   </div>
 </section>
 
@@ -725,13 +736,13 @@ footer .fine{margin:10px 0 0;font-size:12px;color:#8A9096}
     <p class="pull">AI can review your deck. A producer sits in your publisher meeting and owns your milestone.</p>
     <div class="offers-head">
       <h2>Start with an assessment. Keep me on if it helps.</h2>
-      <p>Every engagement starts with an assessment. If you keep me on, its fee comes off the first invoice. Full refund up to the end of the kick-off call.</p>
+      <p>Every engagement starts with an assessment. If you keep me on, its fee comes off the first invoice. Not the right fit after the kick-off call? You get a full refund.</p>
       <p class="pub-line"><strong>Publishers:</strong> I assess a developer’s build, plan and team before you sign.</p>
     </div>
     <div class="offers">
       <div class="offer open">
         <div><p class="kicker">Start here</p><h3>Project assessment</h3><p class="fmt">Fixed price · 2 weeks</p></div>
-        <p class="body">I play your build, read your plan, schedule, budget and pitch, and interview your leads. You get a written report: where you really are, the five biggest risks, what to cut, and a plan to your next milestone. Plus a 90-minute call. Full refund up to the end of the kick-off call.</p>
+        <p class="body">I play your build, read your plan, schedule, budget and pitch, and interview your leads. You get a written report: where you really are, the five biggest risks, what to cut, and a plan to your next milestone. Plus a 90-minute call. Full refund if it’s not the right fit after the kick-off call.</p>
         <div><span class="price">EUR 2,900</span><a href="#contact">Book an assessment</a></div>
       </div>
       <div class="offer">
@@ -795,8 +806,8 @@ footer .fine{margin:10px 0 0;font-size:12px;color:#8A9096}
       <details class="faq-item"><summary>Do you work with publishers?</summary><p>Yes. Publishers use the project assessment to get an outside view of a developer’s build, plan and team before they sign, and I can act as the producer on a funded external team.</p></details>
       <details class="faq-item"><summary>Can you talk to our publisher or licensor?</summary><p>Yes. I can join milestone reviews and approval meetings, and prepare the reporting they expect.</p></details>
       <details class="faq-item"><summary>How does working across time zones work?</summary><p>Calls are booked in slots that suit Europe, the US and Asia-Pacific, and written updates keep everyone informed between calls.</p></details>
-      <details class="faq-item"><summary>Is there a guarantee?</summary><p>Yes. You get a full refund up to the end of the kick-off call.</p></details>
-      <details class="faq-item"><summary>How does payment work?</summary><p>Half on signing, half when the report is delivered. The fee comes off your first invoice if you keep me on.</p></details>
+      <details class="faq-item"><summary>Is there a guarantee?</summary><p>Yes, two. If it’s not the right fit after the kick-off call, you get a full refund. And if I don’t deliver the report and the walkthrough as described, you get your money back.</p></details>
+      <details class="faq-item"><summary>How does payment work?</summary><p>Half on signing and half when the report is ready. The walkthrough call and the written report follow the second payment. The fee comes off your first invoice if you keep me on.</p></details>
     </div>
   </div>
   </div>
@@ -823,7 +834,7 @@ footer .fine{margin:10px 0 0;font-size:12px;color:#8A9096}
     <p class="pull">A producer sits in your publisher meeting and owns your milestone.</p>
     <div class="offers-head">
       <h2>A shipped producer’s eyes on your game, at indie prices.</h2>
-      <p>Small teams need an honest read on where they are, and someone who holds them to their own plan for a few hours a month. Full refund up to the end of the kick-off call.</p>
+      <p>Small teams need an honest read on where they are, and someone who holds them to their own plan for a few hours a month. Not the right fit after the kick-off call? You get a full refund.</p>
     </div>
     <div class="offers">
       <div class="offer open">
@@ -883,7 +894,7 @@ footer .fine{margin:10px 0 0;font-size:12px;color:#8A9096}
       <details class="faq-item"><summary>Will you sign an NDA?</summary><p>Yes, before I see anything. I can also send my own if you’d rather.</p></details>
       <details class="faq-item"><summary>Can you help with my publisher pitch?</summary><p>Yes. The assessment shows what a publisher will question first, and mentoring keeps your plan on track while you pitch.</p></details>
       <details class="faq-item"><summary>Can I cancel mentoring?</summary><p>Yes. It’s monthly, and you can cancel any time.</p></details>
-      <details class="faq-item"><summary>Is there a guarantee?</summary><p>Yes. You get a full refund up to the end of the kick-off call.</p></details>
+      <details class="faq-item"><summary>Is there a guarantee?</summary><p>Yes, two. If it’s not the right fit after the kick-off call, you get a full refund. And if I don’t deliver the report and the walkthrough as described, you get your money back.</p></details>
       <details class="faq-item"><summary>How does payment work?</summary><p>Fixed-price work is paid in full upfront. The assessment fee comes off your first invoice if you keep me on, and mentoring is billed monthly.</p></details>
       <details class="faq-item"><summary>How does working across time zones work?</summary><p>Calls are booked in slots that suit Europe, the US and Asia-Pacific, and written updates keep everyone informed between calls.</p></details>
     </div>
