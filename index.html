@@ -294,7 +294,7 @@ footer .fine{margin:10px 0 0;font-size:12px;color:#8A9096}
 .rail{list-style:none;margin:0 0 8px;padding:0 0 0 36px;position:relative;max-width:820px}
 .rail:before{content:"";position:absolute;left:11px;top:12px;bottom:28px;width:2px;background:var(--line)}
 .st{position:relative;background:var(--white);border:1px solid var(--line);border-radius:var(--radius);padding:16px 20px;margin:0 0 12px}
-.st:before{content:"";position:absolute;left:-31px;top:19px;width:14px;height:14px;border-radius:50%;background:var(--accent);border:3px solid var(--accent)}
+.st:before{content:"";box-sizing:border-box;position:absolute;left:-32px;top:19px;width:14px;height:14px;border-radius:50%;background:var(--accent);border:3px solid var(--accent)}
 .st.opt:before{background:var(--paper);border:2px dashed var(--accent)}
 .st b{display:block;margin:0 0 4px;font-family:var(--mono);font-weight:500;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
 .st span{color:var(--text)}
@@ -390,7 +390,7 @@ footer .fine{margin:10px 0 0;font-size:12px;color:#8A9096}
   .offer > div:last-child a{grid-area:link;display:none;margin-top:12px}
   .offer.open .body{display:block}
   .offer.open > div:last-child a{display:inline-block}
-  .swipe{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;margin-inline:calc(var(--gutter) * -1);padding:2px var(--gutter) 6px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .swipe{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding-inline:var(--gutter);margin-inline:calc(var(--gutter) * -1);padding:2px var(--gutter) 6px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
   .swipe::-webkit-scrollbar{display:none}
   .swipe > *{flex:0 0 78%;scroll-snap-align:start;min-width:0}
   .swipe-dots{display:flex;gap:6px;justify-content:center;margin:10px 0 4px}
