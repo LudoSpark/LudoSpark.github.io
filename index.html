@@ -367,8 +367,14 @@ footer .fine{margin:10px 0 0;font-size:12px;color:#8A9096}
 @media (min-width:1101px){
   .menu-btn,.mobile-menu{display:none!important}
 }
+@media (min-width:900px){
+  .hero .ctas{flex-wrap:nowrap}
+  .hero .ctas .btn{white-space:nowrap}
+}
 @media (min-width:861px){
   .dock{display:none!important}
+  .hero .ctas{gap:10px}
+  .hero .ctas .btn{padding:14px clamp(14px,1.5vw,22px);font-size:clamp(15px,1.25vw,17px)}
   .faq{max-width:none;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
   .faq-item summary{cursor:default;padding:24px 28px 8px}
   .faq-item summary::after{content:none}
