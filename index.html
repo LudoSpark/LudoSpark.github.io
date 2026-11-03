@@ -201,7 +201,7 @@ dialog.story::backdrop{background:rgba(17,20,24,.65)}
 .story .card .meta{margin-top:0;margin-left:0}
 .story .card h3{margin-left:0;font-size:26px}
 .story .card .hook{flex:none;font-size:17px;margin-left:0;margin-top:8px}
-.story .card .story-cta{grid-column:1;margin-top:16px}
+.story .card .story-cta{grid-column:1;margin-top:24px}
 .story .full{grid-column:1/-1;margin:24px 0 0;max-width:68ch;display:flex;flex-direction:column;gap:14px;font-size:17px;line-height:1.6;color:var(--text)}
 .story .full p{margin:0}
 .story .story-cta a{display:inline-flex;align-items:center;gap:8px;min-height:48px;padding:12px 22px;border-radius:8px;background:var(--accent);color:var(--white);font-weight:600;text-decoration:none;transition:filter .15s,transform .15s}
@@ -1081,7 +1081,7 @@ footer .fine{margin:10px 0 0;font-size:12px;color:#8A9096}
         var holder = link.parentElement;
         cta.appendChild(link);
         if (holder && holder.tagName === 'P' && !holder.textContent.trim()) holder.remove();
-        copy.insertBefore(cta, copy.querySelector('.full'));
+        copy.appendChild(cta);
       }
       body.innerHTML = '';
       body.appendChild(copy);
