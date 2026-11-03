@@ -80,10 +80,8 @@ nav .pill.pill-line:hover{background:var(--paper);color:var(--ink);filter:none}
 .hero h1{font-size:clamp(44px,5.2vw,72px);line-height:1.02;letter-spacing:-0.025em}
 .hl{display:grid}
 .hl .v{grid-area:1/1;visibility:hidden;opacity:0}
-.hl .v.on{visibility:visible;opacity:1;animation:hlin .4s ease-out}
-@keyframes hlin{from{opacity:0}}
+.hl .v.on{visibility:visible;opacity:1}
 .hl b{font-weight:inherit;color:var(--accent-light)}
-@media (prefers-reduced-motion:reduce){.hl .v.on{animation:none}}
 .hero .sub{font-size:clamp(18px,1.6vw,22px);color:#C9CCD0;max-width:none;margin:28px 0 0;text-wrap:pretty}
 .hero .small{font-size:15px;color:#A3A8AE;margin:20px 0 0;max-width:none;text-wrap:pretty}
 .hero figure{margin:0}
@@ -961,6 +959,7 @@ footer .fine{margin:10px 0 0;font-size:12px;color:#8A9096}
   <a class="btn btn-alt email-link" href="mailto:savcic.andrej@gmail.com?subject=Enquiry">Email me</a>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script>
 // Hero: crossfade through the work images, led by the headline projects
 (function () {
@@ -1109,7 +1108,7 @@ footer .fine{margin:10px 0 0;font-size:12px;color:#8A9096}
   });
 })();
 
-// Headline: the last words cycle once through the moments I cover, then settle on "launch date".
+// Headline: the last words keep cycling through the moments I cover, animated with GSAP.
 // Choosing an audience (hero buttons, tabs or ?for=studio / ?for=indie) locks the matching wording.
 (function () {
   var h = document.getElementById('headline');
@@ -1117,10 +1116,20 @@ footer .fine{margin:10px 0 0;font-size:12px;color:#8A9096}
   var vs = Array.prototype.slice.call(h.querySelectorAll('.v'));
   var pick = { studio: 1, indie: 3 };
   var i = 0, timer = null, locked = false, paused = false;
+  var g = window.gsap;
   function show(n) {
-    vs[i].classList.remove('on');
+    if (n === i) return;
+    var out = vs[i], inn = vs[n];
+    vs.forEach(function (v) {
+      if (v !== out && v !== inn) { if (g) g.killTweensOf(v); v.classList.remove('on'); if (g) g.set(v, { clearProps: 'all' }); }
+    });
     i = n;
-    vs[i].classList.add('on');
+    if (!g) { out.classList.remove('on'); inn.classList.add('on'); return; }
+    g.killTweensOf([out, inn]);
+    g.set(inn, { clearProps: 'all' });
+    inn.classList.add('on');
+    g.to(out, { opacity: 0, y: -14, duration: 0.3, ease: 'power2.in', onComplete: function () { out.classList.remove('on'); g.set(out, { clearProps: 'all' }); } });
+    g.fromTo(inn, { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.55, delay: 0.2, ease: 'power3.out', clearProps: 'all' });
   }
   function lock(aud) {
     locked = true;
@@ -1130,8 +1139,7 @@ footer .fine{margin:10px 0 0;font-size:12px;color:#8A9096}
   function step() {
     if (locked) return;
     if (paused) { timer = setTimeout(step, 600); return; }
-    if (i === vs.length - 1) { show(0); return; }
-    show(i + 1);
+    show((i + 1) % vs.length);
     timer = setTimeout(step, 3200);
   }
   document.querySelectorAll('[data-tab]').forEach(function (b) {
@@ -1139,7 +1147,6 @@ footer .fine{margin:10px 0 0;font-size:12px;color:#8A9096}
   });
   h.addEventListener('mouseenter', function () { paused = true; });
   h.addEventListener('mouseleave', function () { paused = false; });
-  h.addEventListener('click', function () { locked = true; clearTimeout(timer); });
   var m = /[?&]for=(studio|indie)/.exec(location.search);
   if (m) {
     var t = document.querySelector('[data-tab="' + m[1] + '"]');
