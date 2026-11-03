@@ -353,8 +353,6 @@ footer .fine{margin:10px 0 0;font-size:12px;color:#8A9096}
   .menu-btn{display:grid}
   nav{gap:10px}
   nav .pill .x{display:none}
-  .subtabs{margin-bottom:24px}
-  .subtabs button{padding:12px 12px;font-size:16px}
   .dock{display:flex}
   footer .w{padding-bottom:calc(24px + 84px)}
   .work .card{display:grid;grid-template-columns:104px 1fr;grid-template-areas:"pic title" "pic hook";align-items:center;column-gap:14px;padding:10px 14px 10px 10px}
@@ -367,8 +365,20 @@ footer .fine{margin:10px 0 0;font-size:12px;color:#8A9096}
 @media (min-width:861px){
   .menu-btn,.mobile-menu,.dock{display:none!important}
 }
+@media (max-width:420px){
+  .logo{font-size:22px}
+  nav .pill{padding:12px 14px}
+  header{gap:10px}
+}
 
 @media (max-width:860px){
+  p,li,figcaption,summary{text-wrap:pretty}
+  .logo{white-space:nowrap}
+  .subtabs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;border:0;margin:0 0 24px;overflow:visible}
+  .subtabs button{margin:0;min-height:52px;padding:10px 6px;border:1.5px solid var(--ink);border-radius:8px;background:var(--white);color:var(--ink);font-size:17px;line-height:1.1;white-space:normal}
+  .subtabs button[aria-selected="true"]{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+  .subtabs button:hover{background:var(--paper)}
+  .subtabs button[aria-selected="true"]:hover{background:var(--ink)}
   .hero .ctas{flex-direction:row;gap:8px;margin-top:24px}
   .hero .ctas .btn{flex:1;min-height:56px;padding:10px 8px;font-size:15px;line-height:1.2}
   .hero .stats{gap:14px}
