@@ -133,11 +133,13 @@ nav .pill.pill-line:hover{background:var(--paper);color:var(--ink);filter:none}
 .ask + .note{margin:0 0 20px}
 .ask{font-family:var(--display);font-weight:800;font-size:clamp(22px,2.4vw,30px);letter-spacing:-0.01em;line-height:1.15;margin:0 0 16px}
 .tabs{display:inline-flex;gap:4px;padding:5px;border:2px solid var(--ink);border-radius:999px;background:var(--white);margin-bottom:40px}
-.tabs button{background:none;border:0;border-radius:999px;padding:0 26px;min-height:50px;font-family:var(--display);font-weight:800;font-size:18px;color:var(--ink);cursor:pointer;transition:background .15s,color .15s}
+.tabs button{background:none;border:0;border-radius:999px;padding:0 32px;min-height:60px;font-family:var(--display);font-weight:800;font-size:22px;color:var(--ink);cursor:pointer;transition:background .15s,color .15s}
 .tabs button:hover{background:var(--paper)}
 .tabs button[aria-selected="true"]{background:var(--accent);color:var(--white)}
 .moments{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
 .moments li{display:flex;flex-direction:column;gap:14px;padding:24px;background:var(--white);border:1px solid var(--line);border-radius:var(--radius);font-family:var(--display);font-weight:700;font-size:19px;line-height:1.3}
+.moments li .see{margin-top:auto;padding-top:14px;font-family:var(--body);font-weight:600;font-size:15px;color:var(--accent);text-decoration:none}
+.moments li .see:hover{text-decoration:underline}
 .moments li b{font-family:var(--mono);font-weight:500;font-size:13px;color:var(--accent)}
 .explain{max-width:780px;margin:0 0 48px;padding:20px 24px;background:var(--white);border:1px solid var(--line);border-radius:var(--radius);font-size:18px;color:var(--text)}
 .explain strong{display:block;margin-bottom:4px;font-family:var(--display);font-weight:800;font-size:20px;color:var(--ink)}
@@ -334,7 +336,7 @@ footer .fine{margin:10px 0 0;font-size:12px;color:#8A9096}
   .ctas{flex-direction:column}
   .ctas .btn{justify-content:center}
   .tabs{display:flex;margin-bottom:40px}
-  .tabs button{flex:1;padding:0 12px;font-size:15px}
+  .tabs button{flex:1;padding:0 12px;min-height:56px;font-size:17px}
   .moments,.grid2,.grid3,.work,.work.featured{grid-template-columns:1fr}
   .offer{padding:24px}
   .about{grid-template-columns:1fr}
@@ -705,7 +707,7 @@ footer .fine{margin:10px 0 0;font-size:12px;color:#8A9096}
 <!-- ===== OFFERS (two tabs: studios / indie) ===== -->
 <section id="offers" class="w sec">
   <p class="ask" id="ask">Are you an indie team or a studio / publisher?</p>
-  <p class="note"><strong>Founding clients:</strong> I’m taking three founding clients this year, on terms that suit both of us. Ask on the triage call.</p>
+  <p class="note"><strong>Founding clients:</strong> I’m taking three founding clients this year, on terms that suit both of us. Ask on the free 20-minute call.</p>
   <div class="tabs" role="tablist" aria-labelledby="ask">
     <button role="tab" aria-selected="true" data-tab="studio">Studios and publishers</button>
     <button role="tab" aria-selected="false" data-tab="indie">Indie teams</button>
@@ -820,12 +822,12 @@ footer .fine{margin:10px 0 0;font-size:12px;color:#8A9096}
     <p class="kicker">When to bring me in</p>
     <h2>Most indie teams call at one of these moments.</h2>
     <ol class="moments swipe">
-      <li>You’re about to send your first publisher pitch.</li>
-      <li>You want your pitch to land with publishers.</li>
-      <li>Your scope and your runway need to line up.</li>
-      <li>A publisher replied, and now they want a budget and a schedule.</li>
-      <li>You want one person owning the plan.</li>
-      <li>You’re applying for a grant or fund and need a credible plan.</li>
+      <li>You’re about to send your first publisher pitch.<a class="see" href="#offers" data-offer="Project assessment for small teams">See: Project assessment</a></li>
+      <li>You want your pitch to land with publishers.<a class="see" href="#offers" data-offer="Project assessment for small teams">See: Project assessment</a></li>
+      <li>Your scope and your runway need to line up.<a class="see" href="#offers" data-offer="Project assessment for small teams">See: Project assessment</a></li>
+      <li>A publisher replied, and now they want a budget and a schedule.<a class="see" href="#offers" data-offer="Budget and schedule for your publisher">See: Budget and schedule</a></li>
+      <li>You want one person owning the plan.<a class="see" href="#offers" data-offer="Production mentoring">See: Production mentoring</a></li>
+      <li>You’re applying for a grant or fund and need a credible plan.<a class="see" href="#offers" data-offer="Grant and fund plan">See: Grant and fund plan</a></li>
     </ol>
     <p class="pull">A producer sits in your publisher meeting and owns your milestone.</p>
     <div class="offers-head">
@@ -839,6 +841,16 @@ footer .fine{margin:10px 0 0;font-size:12px;color:#8A9096}
         <div><span class="price">EUR 750</span><a href="#contact">Book an assessment</a></div>
       </div>
       <div class="offer">
+        <div><h3>Budget and schedule for your publisher</h3><p class="fmt">Fixed price · 2 days of work</p></div>
+        <p class="body">I build a publisher-ready budget and schedule with you: what the game really costs, phase by phase, and a schedule you can defend. Plus a 60-minute call.</p>
+        <div><span class="price">EUR 700</span><a href="#contact">Get a budget and schedule</a></div>
+      </div>
+      <div class="offer">
+        <div><h3>Grant and fund plan</h3><p class="fmt">Fixed price · 2 days of work</p></div>
+        <p class="body">A credible plan for your application: scope, schedule, budget and risks, written the way funds expect to read it. Plus a 60-minute call.</p>
+        <div><span class="price">From EUR 700</span><a href="#contact">Plan my application</a></div>
+      </div>
+      <div class="offer">
         <div><h3>Production mentoring</h3><p class="fmt">Monthly · cancel any time</p></div>
         <p class="body">Two 60-minute calls a month, and messages answered within 48 hours in between. I learn your project, track your plan with you, and flag early when the plan needs adjusting. Assessment fee credited.</p>
         <div><span class="price">EUR 350 / month</span><a href="#contact">Start mentoring</a></div>
@@ -849,7 +861,7 @@ footer .fine{margin:10px 0 0;font-size:12px;color:#8A9096}
         <div><span class="price">From EUR 500</span></div>
       </div>
     </div>
-    <p class="note">Prices exclude VAT.</p>
+    <p class="note">Indie pricing is for teams of 2 to 10 without publisher funding. Extra days are EUR 350. Prices exclude VAT.</p>
   </div>
   <div class="sub" data-sub="how" role="tabpanel">
     <p class="kicker">How it works</p>
@@ -881,7 +893,7 @@ footer .fine{margin:10px 0 0;font-size:12px;color:#8A9096}
       <details class="faq-item"><summary>Can you help with my publisher pitch?</summary><p>Yes. The assessment shows what a publisher will question first, and mentoring keeps your plan on track while you pitch.</p></details>
       <details class="faq-item"><summary>Can I cancel mentoring?</summary><p>Yes. It’s monthly, and you can cancel any time.</p></details>
       <details class="faq-item"><summary>Is there a guarantee?</summary><p>Yes, two. If it’s not the right fit after the kick-off call, you get a full refund. And if I don’t deliver the report and the walkthrough as described, you get your money back.</p></details>
-      <details class="faq-item"><summary>How does payment work?</summary><p>The assessment is paid in full upfront. The fee comes off your first invoice if you keep me on, and mentoring is billed monthly.</p></details>
+      <details class="faq-item"><summary>How does payment work?</summary><p>Fixed-price work is paid in full upfront. The assessment fee comes off your first invoice if you keep me on, and mentoring is billed monthly.</p></details>
       <details class="faq-item"><summary>How does working across time zones work?</summary><p>Calls are booked in slots that suit Europe, the US and Asia-Pacific, and written updates keep everyone informed between calls.</p></details>
     </div>
   </div>
@@ -1360,6 +1372,20 @@ document.querySelectorAll('[data-tab]').forEach(function (btn) {
   syncAll();
   if (mq.addEventListener) mq.addEventListener('change', syncAll); else mq.addListener(syncAll);
 })();
+// Indie moments: open and show the offer that answers them
+document.querySelectorAll('a[data-offer]').forEach(function (a) {
+  a.addEventListener('click', function (e) {
+    e.preventDefault();
+    var panel = a.closest('.panel');
+    var target = Array.prototype.find.call(panel.querySelectorAll('.offer'), function (o) {
+      return o.querySelector('h3').textContent.trim() === a.dataset.offer;
+    });
+    if (!target) return;
+    target.classList.add('open');
+    if (target.firstElementChild.hasAttribute('aria-expanded')) target.firstElementChild.setAttribute('aria-expanded', 'true');
+    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
+});
 </script>
 </body>
 </html>
