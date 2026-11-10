@@ -473,7 +473,7 @@ footer .fine{margin:10px 0 0;font-size:12px;color:#8A9096}
 
 /* ===== Report skin: milestone-report look layered over the base styles. Delete this block to go back. ===== */
 :root{
-  --accent:#B23A0A; --accent-light:#B23A0A; --line:#DDDCD7; --line-dark:#111418;
+  --accent:#B23A0A; --accent-light:#F2A07B; --line:#DDDCD7; --line-dark:#2A2F35;
   --display:'IBM Plex Sans',system-ui,sans-serif; --radius:0px; --shadow:none;
   --desk:#D9D8D3; --gutter:clamp(20px,5vw,64px);
   --g-bg:#DDF1E3; --g-fg:#14532D; --a-bg:#FDEBC8; --a-fg:#7A4A04; --b-bg:#DCE7FB; --b-fg:#1E3A8A;
@@ -482,11 +482,10 @@ body{background:var(--desk)}
 .paper{max-width:1180px;margin:28px auto 64px;background:var(--white);box-shadow:0 2px 0 #C4C3BE;counter-reset:sec}
 .paper .w,.paper header{max-width:none}
 h1,h2,h3{font-weight:700;letter-spacing:-0.015em}
-.dark{background:var(--white);color:var(--ink)}
 .kicker,.dark .kicker{font-size:11px;font-weight:600;letter-spacing:.1em;color:var(--accent)}
+.dark .kicker{color:var(--accent-light)}
 .btn{border-radius:0}
-.btn-line{border:1.5px solid var(--ink);color:var(--ink)}
-.btn-line:hover{background:var(--ink);color:var(--white);filter:none}
+.btn-line:hover{background:var(--paper);color:var(--ink);filter:none}
 .btn-alt:hover{color:var(--white)}
 
 /* status badges */
@@ -503,28 +502,21 @@ h1,h2,h3{font-weight:700;letter-spacing:-0.015em}
 /* header */
 .logo{font-size:24px}
 nav{font-size:16px}
-nav a:not(.pill):hover{color:var(--accent)}
+nav a:not(.pill):hover{color:var(--accent-light)}
 nav .pill{border-radius:0;padding:12px 18px}
-nav .pill.pill-line{border-color:var(--ink);color:var(--ink);padding:10.5px 16.5px}
-nav .pill.pill-line:hover{background:var(--ink);color:var(--white)}
-.menu-btn{border-color:var(--ink);color:var(--ink);border-radius:0}
-.mobile-menu{background:var(--white)}
-.mobile-menu a{color:var(--ink);border-top-color:var(--line)}
+nav .pill.pill-line{padding:10.5px 16.5px}
+.menu-btn{border-radius:0}
 
 /* hero */
-.hero .sub{color:var(--text)}
-.hero .small{color:var(--muted)}
-.hero figure img,.hero .slides{border:1px solid var(--ink);border-radius:0;box-shadow:none}
-.hero figcaption{color:var(--muted);font-family:var(--mono);font-size:12px}
-.hero figcaption strong{color:var(--ink)}
-.hero .dots .pause{color:var(--ink)}
-.hero .dots button::after{background:rgba(17,20,24,.2)}
-.hero .dots button:hover::after{background:rgba(17,20,24,.5)}
-.hero .dots button[aria-current="true"]::after{background:var(--accent)}
-.hero .stats{gap:1px;margin-top:0;background:var(--ink);border:1px solid var(--ink)}
-.hero .stats li{background:var(--white);padding:14px 16px}
-.hero .stats b{color:var(--ink);font-family:var(--body);font-weight:700}
-.hero .stats span{color:var(--text)}
+.hero figure img,.hero .slides{border-radius:0}
+.hero figcaption{font-family:var(--mono);font-size:12px}
+.hero figcaption strong{color:var(--paper)}
+.hero .stats{gap:1px;margin-top:0;background:#3A4048;border:1px solid #3A4048}
+.hero .stats li{background:var(--ink);padding:14px 16px}
+.hero .stats b{color:var(--paper);font-family:var(--body);font-weight:700}
+.hero .stats span{color:#C9CCD0}
+.dark .hero .stats-label,#contact .kicker{color:var(--paper);border-bottom-color:#3A4048}
+.dark .hero .stats-label::before,#contact .kicker::before{color:var(--accent-light)}
 .hero .stats li::after{content:attr(data-status);display:inline-block;margin-top:10px;padding:3px 8px;border-radius:3px;background:var(--g-bg);color:var(--g-fg);font:600 11px/1.4 var(--mono);letter-spacing:.06em;text-transform:uppercase}
 
 /* strip */
@@ -598,21 +590,18 @@ dialog.story,dialog.mail{border-radius:0;border-color:var(--ink)}
 .fit h2{font-size:18px}
 
 /* contact: decision box */
-#contact{background:var(--white);color:var(--ink)}
-#contact .contact{margin:var(--section) var(--gutter) 0;padding:28px;border:2px solid var(--ink)}
+#contact{padding-top:var(--section)}
+#contact .contact{margin:0 var(--gutter);padding:28px;border:2px solid var(--paper)}
 #contact .contact h2{font-size:clamp(24px,3vw,32px);line-height:1.2}
-#contact .owner{margin:18px 0 0;font-family:var(--mono);font-size:13px;color:var(--muted)}
-#contact .links a{color:var(--ink)}
+#contact .owner{margin:18px 0 0;font-family:var(--mono);font-size:13px;color:#A3A8AE}
 footer{border-top:0;margin-top:40px}
-footer .w{color:var(--muted)}
-footer .fine{color:var(--muted)}
 
 /* phone dock */
 .dock{background:var(--white);border-top:1px solid var(--ink)}
 .mail .mail-form input,.mail .mail-form select,.mail .mail-form textarea{border-radius:0}
 
 @media (max-width:860px){
-  body{background:var(--white)}
+  body{background:var(--ink)}
   .paper{margin:0;box-shadow:none}
   .hero .stats{grid-template-columns:1fr 1fr}
   .work .card{border-radius:0;border-color:var(--line)}
