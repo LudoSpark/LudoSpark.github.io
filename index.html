@@ -366,7 +366,7 @@ footer .fine{margin:10px 0 0;font-size:12px;color:#8A9096}
   .work .card{display:grid;grid-template-columns:104px 1fr;grid-template-areas:"pic title" "pic hook";align-items:center;column-gap:14px;padding:10px 14px 10px 10px}
   .work .card .pic{grid-area:pic;aspect-ratio:16/10;padding:0;border:0;border-radius:8px}
   .work .card h3,.work.featured .card h3{grid-area:title;margin:0;font-size:17px;line-height:1.2;align-self:end}
-  .work .card .hook,.work.featured .card .hook{grid-area:hook;margin:3px 0 0;font-size:14px;line-height:1.35;align-self:start;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .work .card .hook,.work.featured .card .hook{grid-area:hook;margin:3px 0 0;font-size:14px;line-height:1.35;align-self:start;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
   .work .card .meta,.work .card .more{display:none}
   .work,.work.featured{gap:10px}
 }
@@ -657,6 +657,12 @@ footer{border-top:0;margin-top:40px}
   .moments.swipe{display:block;border-top:2px solid var(--ink)}
   .moments.swipe li{flex-direction:row;align-items:baseline;gap:16px;padding:14px 0;border:0;border-bottom:1px solid var(--line);background:none;font-family:var(--body);font-weight:600;font-size:17px}
   .moments.swipe li .see{margin:0 0 0 auto;padding:0;white-space:nowrap}
+}
+/* 5. Desktop offers: the highlighted row hangs its orange edge in the gutter so every column lines up; groups get air above them */
+@media (min-width:861px){
+  .offer:has(.kicker){margin-left:-20px;padding-left:20px;padding-right:0}
+  .offers .group{margin-top:14px}
+  .offer-cols + .group{margin-top:0}
 }
 /* 3. About on phones and tablets: photo beside the name, text below at full width */
 @media (max-width:860px){
@@ -981,7 +987,7 @@ footer{border-top:0;margin-top:40px}
       <div class="offer">
         <div><h3>Specialist help</h3><p class="fmt">Scoped after a call</p></div>
         <p class="body">Licensed IP and licensor approvals, choosing and managing co-dev and outsourcing partners, partner contracts alongside your lawyer, and training for your producers.</p>
-        <div><span class="price">EUR 600 / day</span></div>
+        <div><span class="price">EUR 600 / day</span><a href="#contact">Talk about it</a></div>
       </div>
     </div>
     <p class="note">Prices exclude VAT.</p>
@@ -1163,7 +1169,7 @@ footer{border-top:0;margin-top:40px}
     <p class="owner">Owner: you · Due: before your next milestone</p>
     <p class="links"><a class="email-link" href="mailto:hello@andrejsavcic.com">hello@andrejsavcic.com</a> · <a href="https://linkedin.com/in/andrej-savcic">LinkedIn</a></p>
   </div>
-  <footer><div class="w">Andrej Savcic · LudoSpark SRL · games production consulting · <a class="email-link" href="mailto:hello@andrejsavcic.com">hello@andrejsavcic.com</a> · <a href="https://linkedin.com/in/andrej-savcic">LinkedIn</a>
+  <footer><div class="w">Andrej Savcic · LudoSpark SRL · games production consulting
     <p class="fine">Client names refer to work delivered while employed by the studios listed above and are shown for reference only.</p></div></footer>
 </section>
 
