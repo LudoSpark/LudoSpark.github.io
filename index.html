@@ -802,23 +802,20 @@ footer .w,footer .fine,#contact .owner{color:var(--muted) !important;font-family
   .tile span{display:block !important}
 }
 
-/* ===== Offers: collapsed rows under 760px, the column table from 760px up ===== */
-@media (min-width:760px) and (max-width:860px){
-  .offer,.offer-cols{grid-template-columns:150px minmax(0,1fr) 220px;column-gap:36px}
-  .offer{cursor:default;grid-template-areas:none;row-gap:0;align-items:stretch;padding:0;border:0;border-bottom:1px solid var(--line)}
-  .offer > div:first-child,.offer .price,.offer .body,.offer > div:last-child a{grid-area:auto}
-  .offer > div:first-child{align-self:center;padding:28px 0}
-  .offer .body{display:block;margin:0;align-self:center;padding:28px 0}
-  .offer > div:last-child{display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:12px;padding:28px 0 28px 24px;border-left:1px solid var(--line);min-width:0}
-  .offer .price{text-align:left;margin:0;font-size:18px;white-space:nowrap}
+/* ===== Offers: collapsed rows under 760px; header line + full-width text 760-1100px; column table from 1101px ===== */
+@media (min-width:760px) and (max-width:1100px){
+  .offer{cursor:default;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"head price" "body body";gap:14px 32px;align-items:start;padding:26px 0;border:0;border-bottom:1px solid var(--line)}
+  .offer > div:first-child{grid-area:head}
+  .offer > div:last-child{grid-area:price;display:flex;flex-direction:column;align-items:flex-end;gap:10px;padding:0;border:0;min-width:0}
+  .offer .price{grid-area:auto;text-align:right;margin:0;font-size:20px;white-space:nowrap}
   .offer .price::after{display:none}
-  .offer > div:last-child a{display:inline-flex;margin:0;white-space:nowrap;letter-spacing:.06em !important;padding:10px 12px !important;font-size:13px !important}
-  .offer-cols{display:grid;row-gap:0;padding:10px 0;border-top:2px solid var(--ink);border-bottom:1px solid var(--line);font:600 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
-  .offer-cols span:last-child{padding-left:24px}
-  .offers{border-top:0}
-  .offer:has(.kicker){margin-left:-16px;padding-left:16px;padding-right:0}
+  .offer .body{grid-area:body;display:block;margin:0;max-width:none}
+  .offer > div:last-child a{grid-area:auto;display:inline-flex;margin:0;white-space:nowrap}
+  .offer-cols{display:none}
+  .offers{border-top:2px solid var(--ink)}
+  .offer:has(.kicker){margin-left:0;padding-left:18px;padding-right:18px}
   .offers .group{margin-top:28px}
-  .offer-cols + .group{margin-top:0}
+  .offer-cols + .group,.offers > .group:first-child{margin-top:0}
 }
 </style>
 </head>
