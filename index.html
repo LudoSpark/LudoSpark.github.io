@@ -491,6 +491,8 @@ h1,h2,h3{font-weight:700;letter-spacing:-0.015em}
 /* status badges */
 .rag{display:inline-block;margin-left:12px;padding:3px 8px;border-radius:0;font:600 11px/1.4 var(--mono);letter-spacing:.06em;text-transform:uppercase;vertical-align:1px;white-space:nowrap}
 .rag.g{background:var(--g-bg);color:var(--g-fg)}
+p.kicker:has(.rag){display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
+p.kicker .rag{margin-left:0;padding:4px 10px;vertical-align:baseline}
 
 /* numbered report section headings */
 .hero .stats-label,section.sec > .kicker:first-child,.about .kicker,#offers > .ask,#contact .kicker{
