@@ -674,6 +674,135 @@ footer{border-top:0;margin-top:40px}
   .about > div > p:not(.kicker),.about .about-rest,.about .about-more{grid-column:1 / -1}
   .about > div > p:nth-of-type(2){margin-top:20px}
 }
+
+/* ===== Dark system: one palette, one accent, one button style, plain lists. Delete this block to go back to the report look. ===== */
+:root{
+  --ink:#ECE6DA; --paper:#ECE6DA; --white:#121210; --text:#C9C3B6; --muted:#9A958A;
+  --line:#2C2B27; --line-dark:#2C2B27; --accent:#FF5A1F; --accent-light:#FF5A1F;
+  --bg:#0B0B0A; --panel:#121210;
+}
+body{background:var(--bg) !important;background-image:none !important;color:var(--ink);font-size:18px}
+.paper{max-width:none !important;margin:0 !important;background:var(--bg) !important;box-shadow:none !important}
+.dark,#contact,.strip,section{background:transparent !important;color:var(--ink)}
+.paper .w,.paper header{max-width:1240px !important;margin-left:auto;margin-right:auto}
+header{border-bottom:0}
+.dark > header{border-bottom:1px solid var(--line)}
+h1,h2,h3{color:var(--ink)}
+.hero .sub,.about p,.item p,.lead,.note,.offer .body,.card .hook,.fit li,.faq-item p,.st span,.tile span{color:var(--text)}
+.offer .body{font-size:17px}
+.card .hook{font-size:16px}
+
+/* mono labels, one accent */
+.kicker,.dark .kicker,.strip .label,.card .meta,.offer .fmt,.offers .group,.offer-cols,.hero figcaption,.rail-note,.st b{font-family:var(--mono) !important;letter-spacing:.14em;text-transform:uppercase}
+.kicker,.dark .kicker{font-size:12px;color:var(--muted)}
+.card .meta,.offer .fmt{color:var(--muted);font-size:12px}
+.hl .win,.hero .stats b{color:var(--accent) !important}
+.hl .win .bar{background:var(--accent)}
+
+/* section headings: number in accent, thin rule */
+.hero .stats-label,section.sec > .kicker:first-child,.about .kicker,#offers > .ask,#contact .kicker{color:var(--ink) !important;border-bottom-color:var(--line) !important;font-family:var(--mono) !important;font-size:12px !important;letter-spacing:.14em !important;text-transform:uppercase;font-weight:500 !important}
+.hero .stats-label::before,section.sec > .kicker:first-child::before,.about .kicker::before,#offers > .ask::before,#contact .kicker::before{color:var(--accent) !important}
+
+/* status tags become quiet outlined labels in the accent */
+.rag,.rag.g,.offer .kicker,.hero .stats li::after,.st > b::after{background:none !important;color:var(--accent) !important;border:1px solid var(--accent);border-radius:0 !important;font-family:var(--mono)}
+.offer .kicker{display:inline-block;padding:2px 7px;font-size:11px}
+
+/* one button style: filled accent for the main action, outlined for the rest */
+.btn,nav .pill,.more-toggle,.cta-band .btn,.offer .price + a,.story .story-cta a{border-radius:0 !important;font-family:var(--mono) !important;font-size:14px !important;letter-spacing:.12em;text-transform:uppercase;font-weight:500 !important}
+.btn-main,nav .pill:not(.pill-line),.offer:has(.kicker) .price + a,.story .story-cta a{background:var(--accent) !important;border:1.5px solid var(--accent) !important;color:#0B0B0A !important}
+.btn-line,.btn-alt,nav .pill.pill-line,.more-toggle,.offer .price + a{background:transparent !important;border:1.5px solid var(--ink) !important;color:var(--ink) !important}
+.btn-line:hover,.btn-alt:hover,nav .pill.pill-line:hover,.more-toggle:hover,.offer .price + a:hover{background:var(--ink) !important;color:#0B0B0A !important}
+.btn-main:hover,nav .pill:not(.pill-line):hover{filter:brightness(1.08)}
+.card .more,.moments li .see,.tabs button,.subtabs button{font-family:var(--mono) !important;letter-spacing:.1em;text-transform:uppercase}
+.card .more{color:var(--accent) !important;font-size:12px !important}
+
+/* header with the LudoSpark mark */
+.logo{display:inline-flex;align-items:center;gap:12px;color:var(--ink)}
+.logo::before{content:"";width:30px;height:30px;background:url(img/ludospark-mark.svg) center/contain no-repeat;flex:none}
+header{border-bottom:1px solid var(--line)}
+nav a:not(.pill){font-family:var(--mono);font-size:14px;letter-spacing:.12em;text-transform:uppercase;color:var(--text)}
+nav a:not(.pill):hover{color:var(--accent)}
+.menu-btn{border-color:var(--ink) !important;color:var(--ink) !important}
+.mobile-menu{background:var(--bg) !important}
+.mobile-menu a{color:var(--ink) !important;border-top-color:var(--line) !important}
+
+/* hero */
+.hero figure img,.hero .slides{border:1px solid var(--line) !important}
+.hero .stats{background:var(--line) !important;border-color:var(--line) !important}
+.hero .stats li{background:var(--bg) !important}
+.hero .stats span{color:var(--text) !important}
+.hero .dots .pause{color:var(--ink)}
+.hero .dots button::after{background:rgba(236,230,218,.25) !important}
+.hero .dots button[aria-current="true"]::after{background:var(--accent) !important}
+
+/* strip, cards, panels: no white boxes */
+.strip{border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.strip span{color:var(--ink)}
+.card,.item,.about,.explain,.cta-band,.fit .grid2 > div,.tile,.faq-item,.st,.moments li{background:transparent !important;border-color:var(--line) !important;color:var(--ink)}
+.work .card:hover{background:var(--panel) !important}
+.card .pic,.work .card .pic,.about img,.story .card .pic{border-color:var(--line) !important}
+.work,.work.featured{border-top-color:var(--ink) !important}
+dialog.story,dialog.mail{background:var(--panel) !important;color:var(--ink);border-color:var(--line) !important}
+.story .story-cta{background:var(--panel) !important;border-top-color:var(--line) !important}
+.story .close,.mail .close{background:var(--bg) !important;color:var(--ink) !important;border-color:var(--line) !important}
+.mail .mail-form input,.mail .mail-form select,.mail .mail-form textarea{background:var(--bg) !important;color:var(--ink) !important;border-color:var(--line) !important}
+.about blockquote,.pull{border-left-color:var(--accent) !important;color:var(--ink) !important;background:none !important}
+
+/* audience and section tabs */
+.tabs{border-color:var(--ink) !important;background:transparent !important}
+.tabs button{color:var(--ink) !important;font-size:14px !important}
+.tabs button[aria-selected="true"]{background:var(--ink) !important;color:#0B0B0A !important}
+.subtabs{border-bottom-color:var(--line) !important}
+.subtabs button{color:var(--muted) !important;font-size:14px !important}
+.subtabs button[aria-selected="true"]{color:var(--ink) !important;border-bottom-color:var(--accent) !important}
+
+/* offers: plain rows on dark, first step marked by an accent edge only */
+.offers .group{background:transparent !important;border-bottom-color:var(--line) !important;color:var(--accent) !important;padding-left:0 !important}
+.offer-cols{border-top-color:var(--ink) !important;border-bottom-color:var(--line) !important;color:var(--muted) !important}
+.offer{border-bottom-color:var(--line) !important;background:transparent !important}
+.offer:has(.kicker){background:var(--panel) !important;box-shadow:inset 3px 0 0 var(--accent) !important}
+.offer > div:last-child{border-left-color:var(--line) !important}
+.offer .price{color:var(--ink) !important}
+.offers > .note{color:var(--text) !important;border-bottom-color:var(--line) !important}
+.moments,.moments.swipe{border-top-color:var(--ink) !important}
+.moments li{border-bottom-color:var(--line) !important}
+.moments li::before{color:var(--accent) !important}
+.rail:before{background:var(--line) !important}
+.st:before{background:var(--accent) !important;border-color:var(--accent) !important}
+.st.opt:before{background:var(--bg) !important}
+.tile svg{color:var(--accent) !important}
+.faq-item summary{color:var(--ink)}
+.faq-item summary::after{color:var(--accent)}
+.fit li::marker{color:var(--accent)}
+
+/* contact and footer */
+#contact .contact{border:1px solid var(--line) !important}
+#contact .links a,footer a{color:var(--accent) !important}
+footer .w,footer .fine,#contact .owner{color:var(--muted) !important;font-family:var(--mono);font-size:12px}
+.dock{background:var(--bg) !important;border-top-color:var(--line) !important}
+
+/* phones: show everything as plain text, no swipe rows, offers open */
+@media (max-width:860px){
+  .logo{gap:8px;font-size:20px !important}
+  .logo::before{width:24px;height:24px}
+  nav .pill{font-size:12px !important;letter-spacing:.06em;padding:10px 12px !important}
+  .btn{font-size:13px !important;letter-spacing:.08em}
+  body{font-size:18px}
+  .swipe{display:block !important;overflow:visible !important;margin-inline:0 !important;padding:0 !important}
+  .swipe > *{margin-bottom:0}
+  .swipe-dots{display:none !important}
+  .moments.swipe li{display:flex;flex-direction:row;gap:14px;align-items:baseline;padding:14px 0;border:0;border-bottom:1px solid var(--line);font-family:var(--body);font-size:17px;font-weight:600;min-height:0}
+  .moments.swipe li::before{display:inline}
+  .grid3.swipe .item{margin-bottom:12px}
+  .offer{cursor:default}
+  .offer .body,.offer > div:last-child a{display:block !important}
+  .offer .price::after{display:none !important}
+  .offer > div:last-child a{display:inline-flex !important;margin-top:12px}
+  .st span{display:block !important}
+  .st .sum{display:none !important}
+  .st::after{display:none !important}
+  .tile span{display:block !important}
+}
 </style>
 </head>
 <body>
