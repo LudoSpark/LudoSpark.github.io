@@ -608,6 +608,38 @@ footer{border-top:0;margin-top:40px}
   .work .card .pic{border:1px solid var(--ink)}
   #contact .contact{margin-left:var(--gutter);margin-right:var(--gutter);padding:20px}
 }
+
+/* ===== Offers clarity: groups, column heads, a clear first step, real buttons ===== */
+.offer-cols{display:none}
+.offers .group{margin:0;padding:8px 12px;background:#F4F2EC;border-bottom:1px solid var(--line);font:600 12px/1.4 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+.offer .fmt{font-family:var(--body);font-size:14px;color:#4A4F55;margin-top:2px}
+.offer .body{font-size:16px;line-height:1.6;color:var(--text)}
+.offer .price{font-size:24px;color:var(--ink)}
+.offer .price + a{display:inline-flex;align-items:center;min-height:44px;margin-top:10px;padding:10px 16px;border:1.5px solid var(--ink);color:var(--ink);font-size:15px;font-weight:600;text-decoration:none;transition:background .15s,color .15s}
+.offer .price + a:hover{background:var(--ink);color:var(--white)}
+.offer:has(.kicker){background:#FFF8EF;box-shadow:inset 4px 0 0 var(--accent)}
+.offer:has(.kicker) .price + a{background:var(--accent);border-color:var(--accent);color:var(--white)}
+.offer:has(.kicker) .price + a:hover{filter:brightness(1.08)}
+.offers > .note{font-size:15px;color:var(--text);font-style:italic}
+.moments{counter-reset:m}
+.moments li::before{counter-increment:m;content:counter(m,decimal-leading-zero);font:600 13px var(--mono);color:var(--accent)}
+.subtabs{gap:28px;border-bottom:1px solid var(--line)}
+.subtabs button,.subtabs button:hover{min-width:0;min-height:48px;padding:0 2px;border:0;border-bottom:3px solid transparent;margin-bottom:-1px;background:none;color:var(--muted);font-size:17px}
+.subtabs button[aria-selected="true"],.subtabs button[aria-selected="true"]:hover{background:none;color:var(--ink);border-bottom-color:var(--accent)}
+@media (min-width:861px){
+  .offer-cols{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,2fr) 260px;gap:16px 40px;padding:10px 0;border-top:2px solid var(--ink);border-bottom:1px solid var(--ink);font:600 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+  .offer-cols span:last-child{padding-left:32px}
+  .offers{border-top:0}
+  .offer:has(.kicker){padding-left:20px;padding-right:12px}
+  .moments li{font-size:18px}
+}
+@media (max-width:860px){
+  .subtabs{display:flex;gap:22px}
+  .subtabs button,.subtabs button[aria-selected="true"],.subtabs button:hover,.subtabs button[aria-selected="true"]:hover{border:0;border-bottom:3px solid transparent;background:none;font-size:16px;min-height:44px}
+  .subtabs button[aria-selected="true"]{border-bottom-color:var(--accent);color:var(--ink)}
+  .offers .group{margin-top:8px}
+  .moments li::before{display:block}
+}
 </style>
 </head>
 <body>
@@ -893,11 +925,14 @@ footer{border-top:0;margin-top:40px}
       <p class="pub-line"><strong>Publishers:</strong> I assess a developer’s build, plan and team before you sign.</p>
     </div>
     <div class="offers">
+      <div class="offer-cols" aria-hidden="true"><span>Offer</span><span>What you get</span><span>Price</span></div>
+      <p class="group">Fixed price</p>
       <div class="offer open">
         <div><p class="kicker">Start here</p><h3>Project assessment</h3><p class="fmt">Fixed price · 2 weeks</p></div>
-        <p class="body">I play your build, read your plan, schedule, budget and pitch, and interview your leads. You get a written report: where you really are, the five biggest risks, what to cut, and a plan to your next milestone. Plus a 90-minute call. Full refund if it’s not the right fit after the kick-off call.</p>
+        <p class="body">I play your build, read your plan, schedule, budget and pitch, and interview your leads. You get a written report: where you really are, the five biggest risks, what to cut, and a plan to your next milestone. Plus a 90-minute call. Full refund up to the end of the kick-off call.</p>
         <div><span class="price">EUR 2,900</span><a href="#contact">Book an assessment</a></div>
       </div>
+      <p class="group">Monthly</p>
       <div class="offer">
         <div><h3>Producer on call</h3><p class="fmt">Monthly · 3 days a month</p></div>
         <p class="body">Senior backup for a team that already has a producer: a weekly live session, plan and risk tracking, and a review of each milestone build. Calls, reviews and messages count towards the 3 days. Extra days are agreed up front.</p>
@@ -909,6 +944,7 @@ footer{border-top:0;margin-top:40px}
         <div><span class="price">EUR 2,250 / month</span><a href="#contact">Talk about it</a></div>
       </div>
       <p class="note">A fraction of the monthly cost of hiring a senior producer, with no hiring process and no notice period.</p>
+      <p class="group">By the day</p>
       <div class="offer">
         <div><h3>Transition sprint</h3><p class="fmt">4 to 8 weeks · days and end date agreed up front</p></div>
         <p class="body">Focused help through one moment: getting pitch-ready, a milestone and publisher deal, bringing in partners, a port and certification, or the launch window. Ends with a handover to your team.</p>
@@ -990,6 +1026,8 @@ footer{border-top:0;margin-top:40px}
       <p>Small teams need an honest read on where they are, and someone who holds them to their own plan for a few hours a month. Full refund up to the end of the kick-off call.</p>
     </div>
     <div class="offers">
+      <div class="offer-cols" aria-hidden="true"><span>Offer</span><span>What you get</span><span>Price</span></div>
+      <p class="group">Fixed price</p>
       <div class="offer open">
         <div><p class="kicker">Start here</p><h3>Project assessment for small teams</h3><p class="fmt">Fixed price · 1 week</p></div>
         <p class="body">I play your build and read your plan and pitch. Written notes on where you really are, what a publisher will question first, and what to fix, plus a 60-minute call.</p>
@@ -1005,11 +1043,13 @@ footer{border-top:0;margin-top:40px}
         <p class="body">A credible plan for your application: scope, schedule, budget and risks, written the way funds expect to read it. Plus a 60-minute call.</p>
         <div><span class="price">From EUR 700</span><a href="#contact">Plan my application</a></div>
       </div>
+      <p class="group">Monthly</p>
       <div class="offer">
         <div><h3>Production mentoring</h3><p class="fmt">Monthly · cancel any time</p></div>
         <p class="body">Two 60-minute calls a month, and messages answered within 48 hours in between. I learn your project, track your plan with you, and flag early when the plan needs adjusting. Assessment fee credited.</p>
         <div><span class="price">EUR 350 / month</span><a href="#contact">Start mentoring</a></div>
       </div>
+      <p class="group">Workshops</p>
       <div class="offer">
         <div><h3>Workshops</h3><p class="fmt">Half day · online or at your event</p></div>
         <p class="body">Sessions on scoping, milestones and pitching for teams and incubators.</p>
