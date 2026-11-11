@@ -216,7 +216,7 @@ dialog.story::backdrop{background:rgba(17,20,24,.65)}
 .story .story-cta a::after{content:"\2197"}
 .story .story-cta a:hover{filter:brightness(1.08);transform:translateY(-1px)}
 .story .full b{color:var(--ink)}
-.story .close,.mail .close{position:absolute;top:14px;right:14px;z-index:2;width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--paper);color:var(--ink);font-size:22px;line-height:1;cursor:pointer}
+.story .close,.mail .close{position:absolute;top:14px;right:14px;z-index:2;width:40px;height:40px;border-radius:0;border:2px solid var(--ink);background:var(--paper);color:var(--ink);font-size:22px;line-height:1;cursor:pointer}
 .story .close:hover,.mail .close:hover{background:var(--ink);color:var(--paper)}
 @media (max-width:560px){
   .story .card{grid-template-columns:1fr;padding:20px}
@@ -1391,8 +1391,8 @@ document.querySelectorAll('[data-pick]').forEach(function (a) {
     '<label for="mf-link">Link to your game, deck or website (optional)</label><input id="mf-link" type="url" inputmode="url" autocomplete="url">' +
     '</div>' +
     '<div class="mail-actions">' +
-    '<a class="btn btn-main" data-act="app">Open in your email app</a>' +
-    '<a class="btn alt" data-act="gmail" target="_blank" rel="noopener">Open in Gmail</a>' +
+    '<a class="btn btn-main" data-act="gmail" target="_blank" rel="noopener">Open in Gmail</a>' +
+    '<a class="btn alt" data-act="app">Open in your email app</a>' +
     '<button type="button" class="btn alt" data-act="copy">Copy message</button></div>' +
     '<button type="button" class="linklike" data-act="addr">Copy address only</button>';
   document.body.appendChild(dlg);
