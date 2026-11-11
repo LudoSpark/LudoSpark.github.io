@@ -795,14 +795,29 @@ footer .w,footer .fine,#contact .owner{color:var(--muted) !important;font-family
   .moments.swipe li{display:flex;flex-direction:row;gap:14px;align-items:baseline;padding:14px 0;border:0;border-bottom:1px solid var(--line);font-family:var(--body);font-size:17px;font-weight:600;min-height:0}
   .moments.swipe li::before{display:inline}
   .grid3.swipe .item{margin-bottom:12px}
-  .offer{cursor:default}
-  .offer .body,.offer > div:last-child a{display:block !important}
-  .offer .price::after{display:none !important}
-  .offer > div:last-child a{display:inline-flex !important;margin-top:12px}
+  .offer > div:last-child a{margin-top:12px}
   .st span{display:block !important}
   .st .sum{display:none !important}
   .st::after{display:none !important}
   .tile span{display:block !important}
+}
+
+/* ===== Offers: collapsed rows under 760px, the column table from 760px up ===== */
+@media (min-width:760px) and (max-width:860px){
+  .offer{cursor:default;grid-template-columns:minmax(0,1.1fr) minmax(0,1.7fr) 210px;grid-template-areas:none;gap:16px 24px;align-items:start;padding:22px 0;border:0;border-bottom:1px solid var(--line)}
+  .offer > div:first-child,.offer .price,.offer .body,.offer > div:last-child a{grid-area:auto}
+  .offer > div:last-child{display:block;padding-left:20px;border-left:1px solid var(--line);min-width:0}
+  .offer .price{text-align:left;margin:0 0 8px;font-size:18px;white-space:nowrap}
+  .offer > div:last-child a{white-space:nowrap;letter-spacing:.06em !important;padding:10px 12px !important;font-size:13px !important}
+  .offer .price::after{display:none}
+  .offer .body{display:block;margin:0}
+  .offer > div:last-child a{display:inline-flex;margin-top:0}
+  .offer-cols{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1.7fr) 210px;gap:16px 24px;padding:10px 0;border-top:2px solid var(--ink);border-bottom:1px solid var(--line);font:600 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+  .offer-cols span:last-child{padding-left:20px}
+  .offers{border-top:0}
+  .offer:has(.kicker){margin-left:-16px;padding-left:16px;padding-right:0}
+  .offers .group{margin-top:14px}
+  .offer-cols + .group{margin-top:0}
 }
 </style>
 </head>
@@ -1752,19 +1767,22 @@ document.querySelectorAll('[data-tab]').forEach(function (btn) {
   var mq = window.matchMedia('(max-width: 860px)');
   var syncs = [];
 
-  function toggle(host, clickEl, ariaEl) {
+  var mqOffers = window.matchMedia('(max-width: 759px)');
+
+  function toggle(host, clickEl, ariaEl, q) {
+    q = q || mq;
     clickEl.addEventListener('click', function (e) {
-      if (!mq.matches || e.target.closest('a, .body')) return;
+      if (!q.matches || e.target.closest('a, .body')) return;
       host.classList.toggle('open');
       ariaEl.setAttribute('aria-expanded', host.classList.contains('open') ? 'true' : 'false');
     });
     ariaEl.addEventListener('keydown', function (e) {
-      if (!mq.matches || (e.key !== 'Enter' && e.key !== ' ')) return;
+      if (!q.matches || (e.key !== 'Enter' && e.key !== ' ')) return;
       e.preventDefault();
       clickEl.click();
     });
     syncs.push(function () {
-      if (mq.matches) {
+      if (q.matches) {
         ariaEl.setAttribute('role', 'button');
         ariaEl.tabIndex = 0;
         ariaEl.setAttribute('aria-expanded', host.classList.contains('open') ? 'true' : 'false');
@@ -1776,7 +1794,11 @@ document.querySelectorAll('[data-tab]').forEach(function (btn) {
     });
   }
 
-  document.querySelectorAll('.offer').forEach(function (o) { toggle(o, o, o.firstElementChild); });
+  // Offers collapse on phones only (under 760px); the first step starts open
+  document.querySelectorAll('.offer').forEach(function (o) {
+    if (o.querySelector('.kicker')) o.classList.add('open');
+    toggle(o, o, o.firstElementChild, mqOffers);
+  });
   document.querySelectorAll('.st').forEach(function (o) { toggle(o, o, o); });
   document.querySelectorAll('.fit .grid2 > div').forEach(function (o) { toggle(o, o.querySelector('h2'), o.querySelector('h2')); });
 
@@ -1828,7 +1850,8 @@ document.querySelectorAll('[data-tab]').forEach(function (btn) {
 
   function syncAll() { syncs.forEach(function (f) { f(); }); }
   syncAll();
-  if (mq.addEventListener) mq.addEventListener('change', syncAll); else mq.addListener(syncAll);
+  if (mq.addEventListener) { mq.addEventListener('change', syncAll); mqOffers.addEventListener('change', syncAll); }
+  else { mq.addListener(syncAll); mqOffers.addListener(syncAll); }
 })();
 // Indie moments: open and show the offer that answers them
 document.querySelectorAll('a[data-offer]').forEach(function (a) {
