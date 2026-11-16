@@ -17,7 +17,7 @@
     var img = card.querySelector('.pic img');
     if (!img) return;
     var parts = card.querySelector('.meta').textContent.split(' · ');
-    slides.push({ src: img.getAttribute('src'), alt: img.alt, studio: parts[0], role: parts[1], title: card.querySelector('h3').textContent });
+    slides.push({ src: img.getAttribute('src'), hero: img.getAttribute('data-hero') || '', alt: img.alt, studio: parts[0], role: parts[1], title: card.querySelector('h3').textContent });
   });
   slides.sort(function (a, b) { return rank(a.src) - rank(b.src); });
   if (slides.length < 2) return;
@@ -30,7 +30,14 @@
   var imgs = slides.map(function (sl, i) {
     if (i === 0) return first;
     var im = document.createElement('img');
-    im.src = sl.src;
+    if (sl.hero) {
+      // wide high-resolution art in three sizes; the browser picks one for the screen
+      im.src = sl.hero + '-2000.jpg';
+      im.srcset = sl.hero + '-1200.jpg 1200w, ' + sl.hero + '-2000.jpg 2000w, ' + sl.hero + '-3200.jpg 3200w';
+      im.sizes = first.sizes;
+    } else {
+      im.src = sl.src;
+    }
     im.alt = sl.alt;
     im.loading = 'lazy';
     box.appendChild(im);
