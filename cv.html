@@ -28,11 +28,25 @@
 .hero.cv-head .cv-photo{margin:0;grid-column:2;grid-row:1;align-self:start}
 .hero.cv-head .cv-photo img{display:block;width:clamp(160px,16vw,240px);height:auto;aspect-ratio:1/1;object-fit:cover}
 .history{margin:0;padding:0;list-style:none;border-top:2px solid var(--ink)}
-.history li{display:grid;grid-template-columns:240px minmax(0,1fr);gap:8px 32px;padding:18px 0;border-bottom:1px solid var(--line)}
-.history time{font-family:var(--mono);font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding-top:3px}
-.history h3{margin:0;font-size:20px}
-.history p{margin:4px 0 0;color:var(--text)}
-.history .now{color:var(--accent)}
+.history > li{border-bottom:1px solid var(--line)}
+.history-hint{margin:-8px 0 20px;font-size:15px;color:var(--muted)}
+.role summary{display:grid;grid-template-columns:240px minmax(0,1fr) auto;gap:8px 32px;align-items:start;padding:18px 0;cursor:pointer;list-style:none}
+.role summary::-webkit-details-marker{display:none}
+.role summary:hover h3{color:var(--accent-light)}
+.role summary:focus-visible{outline:2px solid var(--accent);outline-offset:4px}
+.history time{font-family:var(--mono);font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding-top:4px}
+.history h3{margin:0;font-size:20px;transition:color .15s}
+.role-place{display:block;margin-top:4px;color:var(--text)}
+.history .now{color:var(--accent-light)}
+.role-toggle{width:28px;height:28px;display:grid;place-items:center;border:1px solid var(--line);color:var(--accent-light);font-family:var(--mono);font-size:18px;line-height:1}
+.role-toggle::after{content:"+"}
+.role[open] .role-toggle::after{content:"−"}
+.role-body{padding:0 60px 24px 272px;color:var(--text);max-width:calc(272px + 78ch)}
+.role-body p{margin:0 0 12px}
+.role-body ul{margin:0;padding-left:20px}
+.role-body li{margin:0 0 8px;text-wrap:pretty}
+.role-body li::marker{color:var(--accent-light)}
+.role-body ul ul{margin-top:8px}
 .skills{margin:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 48px;border-top:2px solid var(--ink)}
 .skills div{padding:18px 0;border-bottom:1px solid var(--line)}
 .skills dt{margin:0 0 6px;font-family:var(--mono);font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
@@ -41,18 +55,22 @@
 .edu h3{margin:0 0 6px;font-size:18px}
 .edu p{margin:0;color:var(--text)}
 #contact .contact h2{margin-bottom:20px}
+#contact .ctas{display:flex;flex-wrap:wrap;gap:12px;margin:0 0 24px}
 #contact .links{font-family:var(--mono);font-size:16px}
 @media (max-width:860px){
   .hero.cv-head{grid-template-columns:minmax(0,1fr)}
   .hero.cv-head > div{grid-row:2}
   .hero.cv-head .cv-photo{grid-column:1;grid-row:1}
   .hero.cv-head .cv-photo img{width:112px}
-  .history li{grid-template-columns:minmax(0,1fr);gap:4px}
+  .role summary{grid-template-columns:minmax(0,1fr) auto;gap:4px 16px}
+  .role summary time{grid-column:1/-1}
+  .role-body{padding:0 0 20px}
   .skills,.edu{grid-template-columns:minmax(0,1fr)}
 }
 @media print{
   header nav,.more-toggle,.cv-head .ctas,.dock{display:none !important}
   #more-work{display:grid !important}
+  .role-body{display:block !important}
 }
 </style>
 </head>
@@ -67,8 +85,7 @@
       <a class="hide" href="#work">Projects</a>
       <a class="hide" href="#history">Experience</a>
       <a class="hide" href="#skills">Skills</a>
-      <a class="hide" href="#contact">Contact</a>
-      <a class="pill" href="Andrej_Savcic_CV.pdf" download>Download CV<span class="x"> (PDF)</span></a>
+      <a class="pill" href="#contact">Contact</a>
       <button type="button" class="menu-btn" aria-expanded="false" aria-controls="mobile-menu" aria-label="Menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
     </nav>
   </header>
@@ -91,10 +108,6 @@
         <li><a href="https://linkedin.com/in/andrej-savcic">linkedin.com/in/andrej-savcic</a></li>
       </ul>
       <p class="sub">Senior and Lead Producer with over a decade across VR, console, PC and mobile, at Sumo Digital, Maze Theory, 22cans, PRELOADED and UNIT9. I have led teams of up to 40 and budgets up to £4M, from pitch and contract through launch and live operation. Below is the work in detail: what I owned on each title, and what came of it.</p>
-      <div class="ctas">
-        <a class="btn btn-main" href="Andrej_Savcic_CV.pdf" download>Download CV (PDF)</a>
-        <a class="btn btn-line" href="mailto:hello@andrejsavcic.com">Email me</a>
-      </div>
     </div>
     <figure class="cv-photo"><img src="img/andrej-savcic.png" alt="Andrej Savcic"></figure>
 {% include results.html %}
@@ -112,14 +125,36 @@
 <section id="history" class="w sec">
   <p class="kicker">Experience</p>
   <h2>Work history.</h2>
+  <p class="history-hint">Select a role to see what I owned and what came of it.</p>
   <ol class="history">
-    <li><time><span class="now">Jan 2025 to present</span></time><div><h3>Founder and Director · LudoSpark</h3><p>Bucharest</p></div></li>
-    <li><time>Jun 2023 to Nov 2024</time><div><h3>Lead Producer · Maze Theory</h3><p>London</p></div></li>
-    <li><time>Jun 2021 to May 2023</time><div><h3>Senior Producer · Sumo Digital</h3><p>Leamington Spa</p></div></li>
-    <li><time>Nov 2019 to Nov 2020</time><div><h3>Head of Production · 22cans</h3><p>Guildford</p></div></li>
-    <li><time>Dec 2017 to Mar 2019</time><div><h3>Producer · PRELOADED</h3><p>London</p></div></li>
-    <li><time>Jun 2016 to Aug 2017</time><div><h3>VR Project Manager · UNIT9</h3><p>London</p></div></li>
-    <li><time>May 2015 to Jun 2016</time><div><h3>IT Project Manager · UNIT9</h3><p>London</p></div></li>
+    <li><details class="role">
+      <summary><time><span class="now">Jan 2025 to present</span></time><span class="role-head"><h3>Founder and Director · LudoSpark</h3><span class="role-place">Bucharest</span></span><span class="role-toggle" aria-hidden="true"></span></summary>
+      <div class="role-body"><p>Founded an independent games studio and consultancy. Delivered games R&amp;D for Greenpeace and production training for Quantic Lab, alongside ongoing indie and client development.</p></div>
+    </details></li>
+    <li><details class="role">
+      <summary><time>Jun 2023 to Nov 2024</time><span class="role-head"><h3>Lead Producer · Maze Theory</h3><span class="role-place">London</span></span><span class="role-toggle" aria-hidden="true"></span></summary>
+      <div class="role-body"><p>Led development of Thief VR: Legacy of Shadow from concept through vertical slice, overseeing 30+ developers including 5 department leads (design, engineering, art, QA, audio). Delivered milestones on time and within budget via tightly scoped delivery cycles.</p><ul><li>Boosted targeted feature completion by 15%, introducing enhanced Agile practices with clearer sprint goals, stronger feedback loops, and feature breakdown into testable components.</li><li>Built trust and enabled proactive solution pitches whilst serving as the primary liaison for publisher and investor communications, establishing regular reviews and structured feedback.</li><li>Preserved IP authenticity and minimised feature creep by anchoring the project around a fan-focused vision.</li><li>Reduced licensor review turnaround from two weeks to three days through embedded milestone planning.</li><li>Managed outsourcing strategy in Eastern Europe, achieving 30% cost savings while upholding quality.</li><li>Oversaw final delivery of:<ul><li>Peaky Blinders: The King's Ransom (PSVR2, Pico, PC VR): 75 Metacritic, surpassed first-month sales targets by 15%.</li><li>Ancient Dungeon VR (PSVR2): delivered on time despite a two-week schedule cut, earning a 4.72/5 rating on the PlayStation Store.</li></ul></li></ul></div>
+    </details></li>
+    <li><details class="role">
+      <summary><time>Jun 2021 to May 2023</time><span class="role-head"><h3>Senior Producer · Sumo Digital</h3><span class="role-place">Leamington Spa</span></span><span class="role-toggle" aria-hidden="true"></span></summary>
+      <div class="role-body"><p>Led the PC development workstream on Forza Motorsport (2023) in partnership with Turn 10 Studios, managing platform-specific features, performance optimisations, and Steam integration. Delivered ahead of schedule, freeing the team to assist on console-side features. Additionally, delivered Human: Fall Flat DLCs (“Laboratory” and “Lumber”) and successfully shipped DLCs across PlayStation, Xbox, and PC with localisation in 16 languages.</p><ul><li>Transformed a strained publisher-studio relationship into a collaborative partnership through solution-focused discussions.</li><li>Mentored Associate Producers to overcome confidence gaps and take on major responsibilities. Within 6 to 12 months, two were running independent projects.</li><li>Enabled timely risk mitigation by introducing and maintaining a RAID log reviewed weekly to surface risks, issues, assumptions, and dependencies.</li><li>Cut build verification time by 50% by leading a branching strategy overhaul that reduced recurring bugs.</li><li>Ensured feasibility and clear delivery expectations for potential partners by supporting new business development with detailed time/cost estimates.</li></ul></div>
+    </details></li>
+    <li><details class="role">
+      <summary><time>Nov 2019 to Nov 2020</time><span class="role-head"><h3>Head of Production · 22cans</h3><span class="role-place">Guildford</span></span><span class="role-toggle" aria-hidden="true"></span></summary>
+      <div class="role-body"><p>Directed production across three concurrent titles: Legacy (Soft Launched), Godus (Live Ops), and The Trail (Released) looking after 40 developers. Balanced priorities and resources to keep each on track while aligning with strategic goals.</p><ul><li>Took ownership of Legacy, conducting deep interviews to surface pain points and re-scope the project with a clear path to soft launch. Introduced OKRs to connect daily tasks with studio-wide objectives.</li><li>Managed combined budgets of ~£2M, optimising resource allocation and cutting overhead by reusing tooling and negotiating leaner vendor contracts.</li><li>Drove two internal promotions by improving accountability and by forming cross-functional “strike teams”.</li><li>Refined content updates and boosted player retention by spearheading the Live Ops for Godus and UA strategy for The Trail by leveraging data and A/B testing.</li><li>Led a successful soft launch delivery for Legacy by providing concise briefings and roadmap reviews while serving as primary liaison to studio executives and investors (including Peter Molyneux).</li></ul></div>
+    </details></li>
+    <li><details class="role">
+      <summary><time>Dec 2017 to Mar 2019</time><span class="role-head"><h3>Producer · PRELOADED</h3><span class="role-place">London</span></span><span class="role-toggle" aria-hidden="true"></span></summary>
+      <div class="role-body"><p>Produced Happy Studio, a leading children’s app with 10+ million downloads. Oversaw Unity engine upgrades and localised the app across 24 regions, sustaining global reach and maintainability. Balanced deadlines and creative goals across mobile, AR, and museum installations, adapting workflows to align technical requirements with user engagement objectives. Managed multiple interactive projects concurrently, including:</p><ul><li>London Transport Museum installation: Attracted 200,000+ users with 98% uptime.</li><li>BBC AR accessibility project: Helped shape new AR accessibility guidelines.</li><li>“Play!” at Pitt Rivers Museum, Oxford: Led pre-production on a community-driven research and engagement initiative.</li></ul></div>
+    </details></li>
+    <li><details class="role">
+      <summary><time>Jun 2016 to Aug 2017</time><span class="role-head"><h3>VR Project Manager · UNIT9</h3><span class="role-place">London</span></span><span class="role-toggle" aria-hidden="true"></span></summary>
+      <div class="role-body"><p>Pitched and secured buy-in for Storm VR, UNIT9’s first commercial VR game. Oversaw design, development, storefront submission, and go-to-market planning for a 15-person cross-functional team.</p><ul><li>Migrated from Unity to Unreal to improve performance and enable more immersive interactions.</li><li>Ran structured internal playtests, refining core gameplay and onboarding.</li><li>Launched across Steam, Oculus, and Viveport, earning coverage from Jacksepticeye (1M+ views) and a Pixel Award: People’s Champ (2017).</li></ul></div>
+    </details></li>
+    <li><details class="role">
+      <summary><time>May 2015 to Jun 2016</time><span class="role-head"><h3>IT Project Manager · UNIT9</h3><span class="role-place">London</span></span><span class="role-toggle" aria-hidden="true"></span></summary>
+      <div class="role-body"><p>Managed studio-wide infrastructure and IT budgets, implementing incident tracking, remote workflows, and enhanced access control to reduce friction and support multiple live experiential projects.</p><p>Collaborated with teams across web, post-production, animation, and installations, developing a systems-thinking approach to production.</p><p>Prioritised preventative solutions that let creative teams stay focused, fulfilling the principle “the best IT manager is the one whose name rarely comes up.”</p></div>
+    </details></li>
   </ol>
 </section>
 
@@ -157,6 +192,10 @@
   <div class="w contact">
     <p class="kicker">Contact</p>
     <h2>Get in touch about a role.</h2>
+    <div class="ctas">
+      <a class="btn btn-main" href="Andrej_Savcic_CV.pdf" download>Download CV (PDF)</a>
+      <a class="btn btn-line" href="mailto:hello@andrejsavcic.com">Email me</a>
+    </div>
     <p class="links"><a href="mailto:hello@andrejsavcic.com">hello@andrejsavcic.com</a> · <a href="https://linkedin.com/in/andrej-savcic">LinkedIn</a></p>
   </div>
   <footer><div class="w">Andrej Savcic · Senior / Lead Producer · Bucharest
