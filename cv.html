@@ -58,10 +58,14 @@
 #contact .ctas{display:flex;flex-wrap:wrap;gap:12px;margin:0 0 24px}
 #contact .links{font-family:var(--mono);font-size:16px}
 @media (max-width:860px){
-  .hero.cv-head{grid-template-columns:minmax(0,1fr)}
-  .hero.cv-head > div{grid-row:2}
-  .hero.cv-head .cv-photo{grid-column:1;grid-row:1}
-  .hero.cv-head .cv-photo img{width:112px}
+  .hero.cv-head{grid-template-columns:minmax(0,1fr) auto;column-gap:16px;row-gap:0}
+  .hero.cv-head > div{display:contents}
+  .hero.cv-head .kicker{grid-column:1;grid-row:1}
+  .hero.cv-head h1{grid-column:1;grid-row:2;align-self:end}
+  .hero.cv-head .cv-role{grid-column:1/-1;grid-row:3;margin-top:8px}
+  .hero.cv-head .cv-contact,.hero.cv-head .sub{grid-column:1/-1}
+  .hero.cv-head .cv-photo{grid-column:2;grid-row:1/3;align-self:end;margin-bottom:6px}
+  .hero.cv-head .cv-photo img{width:104px}
   .role summary{grid-template-columns:minmax(0,1fr) auto;gap:4px 16px}
   .role summary time{grid-column:1/-1}
   .role-body{padding:0 0 20px}
