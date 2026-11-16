@@ -64,8 +64,8 @@
   <header>
     <a class="logo" href="/">Andrej Savcic</a>
     <nav aria-label="CV">
-      <a class="hide" href="#history">Experience</a>
       <a class="hide" href="#work">Projects</a>
+      <a class="hide" href="#history">Experience</a>
       <a class="hide" href="#skills">Skills</a>
       <a class="hide" href="#contact">Contact</a>
       <a class="pill" href="Andrej_Savcic_CV.pdf" download>Download CV<span class="x"> (PDF)</span></a>
@@ -73,8 +73,8 @@
     </nav>
   </header>
   <div class="mobile-menu" id="mobile-menu" hidden>
-    <a href="#history">Experience</a>
     <a href="#work">Projects</a>
+    <a href="#history">Experience</a>
     <a href="#skills">Skills</a>
     <a href="#education">Education</a>
     <a href="#contact">Contact</a>
@@ -103,6 +103,11 @@
 
 {% include clients.html %}
 
+<!-- ===== SELECTED WORK (shared with the home page) ===== -->
+<section id="work" class="w sec">
+{% include work.html %}
+</section>
+
 <!-- ===== WORK HISTORY ===== -->
 <section id="history" class="w sec">
   <p class="kicker">Experience</p>
@@ -116,11 +121,6 @@
     <li><time>Jun 2016 to Aug 2017</time><div><h3>VR Project Manager · UNIT9</h3><p>London</p></div></li>
     <li><time>May 2015 to Jun 2016</time><div><h3>IT Project Manager · UNIT9</h3><p>London</p></div></li>
   </ol>
-</section>
-
-<!-- ===== SELECTED WORK (shared with the home page) ===== -->
-<section id="work" class="w sec">
-{% include work.html %}
 </section>
 
 <!-- ===== PROOF (shared) ===== -->
