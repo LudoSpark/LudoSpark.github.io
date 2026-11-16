@@ -44,6 +44,34 @@
     return im;
   });
 
+  // Images whose shape does not match the frame are shown whole over a blurred copy of themselves,
+  // instead of being cropped. The wide hero art is the exception: it is meant to be cropped.
+  var backs = imgs.map(function () {
+    var bd = document.createElement('span');
+    bd.className = 'bd';
+    bd.setAttribute('aria-hidden', 'true');
+    box.insertBefore(bd, box.firstChild);
+    return bd;
+  });
+  function fitAll() {
+    var bw = box.clientWidth, bh = box.clientHeight;
+    if (!bw || !bh) return;
+    var br = bw / bh;
+    imgs.forEach(function (im, i) {
+      var nw = im.naturalWidth, nh = im.naturalHeight;
+      if (!nw || !nh) return;
+      var ir = nw / nh;
+      var crop = 1 - Math.min(br / ir, ir / br);
+      var fit = !slides[i].hero && crop > 0.2;
+      im.classList.toggle('fit', fit);
+      backs[i].classList.toggle('fit', fit);
+      if (fit && !backs[i].style.backgroundImage) backs[i].style.backgroundImage = 'url("' + (im.currentSrc || im.src) + '")';
+    });
+  }
+  imgs.forEach(function (im) { im.addEventListener('load', fitAll); });
+  var fitTimer;
+  window.addEventListener('resize', function () { clearTimeout(fitTimer); fitTimer = setTimeout(fitAll, 120); });
+
   var text = document.createElement('span');
   var dots = document.createElement('div');
   dots.className = 'dots';
@@ -64,6 +92,7 @@
   function show(i) {
     cur = i;
     imgs.forEach(function (im, k) { im.classList.toggle('on', k === i); });
+    backs.forEach(function (bd, k) { bd.classList.toggle('on', k === i); });
     buttons.forEach(function (b, k) { if (k === i) b.setAttribute('aria-current', 'true'); else b.removeAttribute('aria-current'); });
     var sl = slides[i], strong = document.createElement('strong');
     strong.textContent = sl.role;
@@ -101,6 +130,7 @@
     box.appendChild(b);
   });
   show(0);
+  fitAll();
   start();
   fig.addEventListener('mouseenter', stop);
   fig.addEventListener('mouseleave', start);
