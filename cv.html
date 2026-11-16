@@ -27,10 +27,6 @@
 /* project slideshow under the intro, the same one as on the home page */
 .hero.cv-head .cv-reel{grid-column:1 / -1;margin:28px 0 0}
 @media (min-width:861px){.hero.cv-head .cv-reel .slides{aspect-ratio:21/9}}
-/* focal points, so the wide crop keeps each title, logo or face in frame */
-.cv-reel .slides img[src$="godus.jpg"]{object-position:50% 0}
-.cv-reel .slides img[src$="airbus-elev8.jpg"]{object-position:50% 20%}
-.cv-reel .slides img[src$="happy-studio.jpg"]{object-position:50% 60%}
 /* desktop: photo top right beside the name, then the open-to box and intro run the full width below */
 @media (min-width:861px){
   .hero.cv-head{grid-template-rows:auto auto auto 1fr}
@@ -138,7 +134,7 @@
     </div>
     <figure class="cv-photo"><img src="img/andrej-savcic.png" alt="Andrej Savcic"></figure>
     <figure class="cv-reel">
-      <img src="img/hero/thief-vr-2000.jpg" srcset="img/hero/thief-vr-1200.jpg 1200w, img/hero/thief-vr-2000.jpg 2000w, img/hero/thief-vr-3200.jpg 3200w" sizes="(min-width:861px) 1480px, 185vw" alt="Thief VR: Legacy of Shadow key art">
+      <img src="img/thief-vr.jpg" alt="Thief VR: Legacy of Shadow key art">
       <figcaption><strong>Lead Producer</strong> · Thief VR: Legacy of Shadow, Maze Theory</figcaption>
     </figure>
 {% include results.html %}

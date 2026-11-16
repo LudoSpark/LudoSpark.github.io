@@ -795,15 +795,8 @@ footer .w,footer .fine,#contact .owner{color:var(--muted) !important;font-family
   .offers .group{margin-top:28px}
   .offer-cols + .group,.offers > .group:first-child{margin-top:0}
 }
-/* wide slideshow art: keep the subject in frame when the box is cropped to 16:9 or 21:9 */
-.hero .slides img[src*="/hero/thief-vr"]{object-position:56% 50%}
-.hero .slides img[src*="/hero/forza-motorsport"]{object-position:63% 50%}
-.hero .slides img[src*="/hero/human-fall-flat"]{object-position:50% 50%}
-.hero .slides img[src*="/hero/peaky-blinders"]{object-position:50% 40%}
-.hero .slides img[src*="/hero/storm-vr"]{object-position:50% 62%}
-.hero .slides img[src*="/hero/ancient-dungeon-vr"]{object-position:24% 50%}
-/* slides that do not match the frame: shown whole on a blurred, darkened copy of themselves */
+/* every slide: whole and centred over a blurred copy of itself */
 .hero .slides .bd{position:absolute;inset:-28px;background-size:cover;background-position:center;filter:blur(26px) brightness(.5) saturate(1.15);opacity:0;transition:opacity .9s ease;pointer-events:none}
-.hero .slides .bd.fit.on{opacity:1}
-.hero .slides img.fit{object-fit:contain}
+.hero .slides .bd.on{opacity:1}
+.hero .slides img{object-fit:fill;border:0 !important}
 </style>

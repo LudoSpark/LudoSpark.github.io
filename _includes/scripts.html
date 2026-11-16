@@ -17,7 +17,7 @@
     var img = card.querySelector('.pic img');
     if (!img) return;
     var parts = card.querySelector('.meta').textContent.split(' · ');
-    slides.push({ src: img.getAttribute('src'), hero: img.getAttribute('data-hero') || '', heroW: (img.getAttribute('data-hero-w') || '1200,2000,3200').split(','), alt: img.alt, studio: parts[0], role: parts[1], title: card.querySelector('h3').textContent });
+    slides.push({ src: img.getAttribute('src'), alt: img.alt, studio: parts[0], role: parts[1], title: card.querySelector('h3').textContent });
   });
   slides.sort(function (a, b) { return rank(a.src) - rank(b.src); });
   if (slides.length < 2) return;
@@ -30,22 +30,15 @@
   var imgs = slides.map(function (sl, i) {
     if (i === 0) return first;
     var im = document.createElement('img');
-    if (sl.hero) {
-      // wide high-resolution art in three sizes; the browser picks one for the screen
-      im.src = sl.hero + '-' + sl.heroW[Math.min(1, sl.heroW.length - 1)] + '.jpg';
-      im.srcset = sl.heroW.map(function (w) { return sl.hero + '-' + w + '.jpg ' + w + 'w'; }).join(', ');
-      im.sizes = first.sizes;
-    } else {
-      im.src = sl.src;
-    }
+    im.src = sl.src;
     im.alt = sl.alt;
     im.loading = 'lazy';
     box.appendChild(im);
     return im;
   });
 
-  // Images whose shape does not match the frame are shown whole over a blurred copy of themselves,
-  // instead of being cropped. The wide hero art is the exception: it is meant to be cropped.
+  // Every image is shown whole and centred in the frame, over a blurred copy of itself.
+  // The size and position are worked out here, so the result does not depend on the browser's object-fit.
   var backs = imgs.map(function () {
     var bd = document.createElement('span');
     bd.className = 'bd';
@@ -53,24 +46,27 @@
     box.insertBefore(bd, box.firstChild);
     return bd;
   });
-  function fitAll() {
+  function layout() {
     var bw = box.clientWidth, bh = box.clientHeight;
     if (!bw || !bh) return;
-    var br = bw / bh;
     imgs.forEach(function (im, i) {
       var nw = im.naturalWidth, nh = im.naturalHeight;
       if (!nw || !nh) return;
-      var ir = nw / nh;
-      var crop = 1 - Math.min(br / ir, ir / br);
-      var fit = !slides[i].hero && crop > 0.2;
-      im.classList.toggle('fit', fit);
-      backs[i].classList.toggle('fit', fit);
-      if (fit && !backs[i].style.backgroundImage) backs[i].style.backgroundImage = 'url("' + (im.currentSrc || im.src) + '")';
+      var k = Math.min(bw / nw, bh / nh);
+      var w = Math.round(nw * k), h = Math.round(nh * k);
+      var st = im.style;
+      st.width = w + 'px';
+      st.height = h + 'px';
+      st.left = Math.round((bw - w) / 2) + 'px';
+      st.top = Math.round((bh - h) / 2) + 'px';
+      st.right = 'auto';
+      st.bottom = 'auto';
+      if (!backs[i].style.backgroundImage) backs[i].style.backgroundImage = 'url("' + (im.currentSrc || im.src) + '")';
     });
   }
-  imgs.forEach(function (im) { im.addEventListener('load', fitAll); });
-  var fitTimer;
-  window.addEventListener('resize', function () { clearTimeout(fitTimer); fitTimer = setTimeout(fitAll, 120); });
+  imgs.forEach(function (im) { im.addEventListener('load', layout); });
+  var layoutTimer;
+  window.addEventListener('resize', function () { clearTimeout(layoutTimer); layoutTimer = setTimeout(layout, 100); });
 
   var text = document.createElement('span');
   var dots = document.createElement('div');
@@ -130,7 +126,7 @@
     box.appendChild(b);
   });
   show(0);
-  fitAll();
+  layout();
   start();
   fig.addEventListener('mouseenter', stop);
   fig.addEventListener('mouseleave', start);
