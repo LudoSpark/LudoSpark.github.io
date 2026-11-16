@@ -750,7 +750,7 @@ footer .w,footer .fine,#contact .owner{color:var(--muted) !important;font-family
 
 /* phones: show everything as plain text, no swipe rows, offers open */
 @media (max-width:860px){
-  .logo{gap:8px;font-size:20px !important}
+  .logo{gap:8px;font-size:20px !important;min-height:44px}
   .logo::before{width:24px;height:24px}
   nav .pill{font-size:12px !important;letter-spacing:.06em;padding:10px 12px !important}
   .btn{font-size:13px !important;letter-spacing:.08em}
@@ -766,6 +766,11 @@ footer .w,footer .fine,#contact .owner{color:var(--muted) !important;font-family
   .st .sum{display:none !important}
   .st::after{display:none !important}
   .tile span{display:block !important}
+}
+/* phones: email and LinkedIn on their own lines, so no stray dot at a line end */
+@media (max-width:560px){
+  .contact .links{display:flex;flex-direction:column;align-items:flex-start}
+  .contact .links .sep{display:none}
 }
 /* small phones (360px and under): keep logo, button and menu inside the header */
 @media (max-width:400px){
