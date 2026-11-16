@@ -2,8 +2,9 @@
 <script>
 // Hero: crossfade through the work images, led by the headline projects
 (function () {
-  var fig = document.querySelector('.hero figure');
-  if (!fig || !fig.querySelector('figcaption')) return;
+  var capEl = document.querySelector('.hero figcaption');
+  var fig = capEl && capEl.closest('figure');
+  if (!fig) return;
   var first = fig.querySelector('img');
   var cap = fig.querySelector('figcaption');
   var lead = ['thief-vr', 'forza-motorsport', 'godus', 'human-fall-flat'];

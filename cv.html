@@ -24,6 +24,9 @@
 .cv-contact a{color:#F5F5F2}
 .cv-contact a:hover{color:var(--accent-light)}
 .cv-open{margin:18px 0 0;padding:12px 16px;border-left:3px solid var(--accent);background:rgba(245,245,242,.04);font-size:16px;color:#C9CCD0;box-sizing:border-box}
+/* project slideshow under the intro, the same one as on the home page */
+.hero.cv-head .cv-reel{grid-column:1 / -1;margin:28px 0 0}
+@media (min-width:861px){.hero.cv-head .cv-reel .slides{aspect-ratio:21/9}}
 /* desktop: photo top right beside the name, then the open-to box and intro run the full width below */
 @media (min-width:861px){
   .hero.cv-head{grid-template-rows:auto auto auto 1fr}
@@ -34,6 +37,7 @@
   .hero.cv-head .cv-contact{grid-column:1;grid-row:4;align-self:start}
   .hero.cv-head figure.cv-photo{grid-column:2;grid-row:1 / 5;align-self:start}
   .hero.cv-head .cv-open,.hero.cv-head .sub{grid-column:1 / -1;width:auto;max-width:none;box-sizing:border-box}
+  .hero.cv-head figure.cv-reel{grid-column:1 / -1;grid-row:auto;align-self:start}
 }
 .cv-open b{margin-right:6px;font-family:var(--mono);font-size:13px;font-weight:400;letter-spacing:.12em;text-transform:uppercase;color:var(--accent-light)}
 .cv-head .sub{max-width:62ch}
@@ -129,6 +133,10 @@
       <p class="sub">Senior and Lead Producer with over a decade across VR, console, PC and mobile, at Sumo Digital, Maze Theory, 22cans, PRELOADED and UNIT9. I have led teams of up to 40 and budgets up to £4M, from pitch and contract through launch and live operation. Below is the work in detail: what I owned on each title, and what came of it.</p>
     </div>
     <figure class="cv-photo"><img src="img/andrej-savcic.png" alt="Andrej Savcic"></figure>
+    <figure class="cv-reel">
+      <img src="img/thief-vr.jpg" alt="Thief VR: Legacy of Shadow key art">
+      <figcaption><strong>Lead Producer</strong> · Thief VR: Legacy of Shadow, Maze Theory</figcaption>
+    </figure>
 {% include results.html %}
   </section>
 </div>
