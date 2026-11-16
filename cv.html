@@ -1,0 +1,170 @@
+---
+---
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="favicon.png">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Andrej Savcic · CV · Senior / Lead Producer</title>
+<meta name="description" content="CV of Andrej Savcic, Senior and Lead Producer: work history, selected projects, skills and education.">
+<meta name="robots" content="noindex, follow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+{% include styles.html %}
+<style>
+/* ===== CV page only ===== */
+.hero.cv-head{grid-template-columns:minmax(0,1fr) auto;align-items:start;padding-top:clamp(24px,3vw,40px)}
+.hero.cv-head > div{display:block;grid-column:1;grid-row:1}
+.cv-head h1{margin:0 0 10px;font-size:clamp(44px,6vw,80px);line-height:1}
+.cv-role{margin:0 0 18px;font-family:var(--mono);font-size:15px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent-light)}
+.cv-contact{margin:0;padding:0;list-style:none;display:flex;flex-wrap:wrap;gap:8px 24px;font-family:var(--mono);font-size:14px;color:#C9CCD0}
+.cv-contact a{color:#F5F5F2}
+.cv-contact a:hover{color:var(--accent-light)}
+.cv-head .sub{max-width:62ch}
+.cv-head .ctas{margin-top:28px}
+.hero.cv-head .cv-photo{margin:0;grid-column:2;grid-row:1;align-self:start}
+.hero.cv-head .cv-photo img{display:block;width:clamp(160px,16vw,240px);height:auto;aspect-ratio:1/1;object-fit:cover}
+.history{margin:0;padding:0;list-style:none;border-top:2px solid var(--ink)}
+.history li{display:grid;grid-template-columns:240px minmax(0,1fr);gap:8px 32px;padding:18px 0;border-bottom:1px solid var(--line)}
+.history time{font-family:var(--mono);font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding-top:3px}
+.history h3{margin:0;font-size:20px}
+.history p{margin:4px 0 0;color:var(--text)}
+.history .now{color:var(--accent)}
+.skills{margin:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 48px;border-top:2px solid var(--ink)}
+.skills div{padding:18px 0;border-bottom:1px solid var(--line)}
+.skills dt{margin:0 0 6px;font-family:var(--mono);font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+.skills dd{margin:0;color:var(--text)}
+.edu{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px 48px;border-top:2px solid var(--ink);padding-top:18px}
+.edu h3{margin:0 0 6px;font-size:18px}
+.edu p{margin:0;color:var(--text)}
+#contact .contact h2{margin-bottom:20px}
+#contact .links{font-family:var(--mono);font-size:16px}
+@media (max-width:860px){
+  .hero.cv-head{grid-template-columns:minmax(0,1fr)}
+  .hero.cv-head > div{grid-row:2}
+  .hero.cv-head .cv-photo{grid-column:1;grid-row:1}
+  .hero.cv-head .cv-photo img{width:112px}
+  .history li{grid-template-columns:minmax(0,1fr);gap:4px}
+  .skills,.edu{grid-template-columns:minmax(0,1fr)}
+}
+@media print{
+  header nav,.more-toggle,.cv-head .ctas,.dock{display:none !important}
+  #more-work{display:grid !important}
+}
+</style>
+</head>
+<body class="page-cv">
+<div class="paper">
+
+<!-- ===== HEADER ===== -->
+<div class="dark">
+  <header>
+    <a class="logo" href="/">Andrej Savcic</a>
+    <nav aria-label="CV">
+      <a class="hide" href="#history">Experience</a>
+      <a class="hide" href="#work">Projects</a>
+      <a class="hide" href="#skills">Skills</a>
+      <a class="hide" href="#contact">Contact</a>
+      <a class="pill" href="Andrej_Savcic_CV.pdf" download>Download CV<span class="x"> (PDF)</span></a>
+      <button type="button" class="menu-btn" aria-expanded="false" aria-controls="mobile-menu" aria-label="Menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+    </nav>
+  </header>
+  <div class="mobile-menu" id="mobile-menu" hidden>
+    <a href="#history">Experience</a>
+    <a href="#work">Projects</a>
+    <a href="#skills">Skills</a>
+    <a href="#education">Education</a>
+    <a href="#contact">Contact</a>
+  </div>
+
+  <section id="top" class="w hero cv-head">
+    <div>
+      <p class="kicker">Curriculum vitae</p>
+      <h1>Andrej Savcic</h1>
+      <p class="cv-role">Senior / Lead Producer</p>
+      <ul class="cv-contact">
+        <li>Bucharest, Romania</li>
+        <li><a href="mailto:hello@andrejsavcic.com">hello@andrejsavcic.com</a></li>
+        <li><a href="https://linkedin.com/in/andrej-savcic">linkedin.com/in/andrej-savcic</a></li>
+      </ul>
+      <p class="sub">Senior and Lead Producer with over a decade across VR, console, PC and mobile, at Sumo Digital, Maze Theory, 22cans, PRELOADED and UNIT9. I have led teams of up to 40 and budgets up to £4M, from pitch and contract through launch and live operation. Below is the work in detail: what I owned on each title, and what came of it.</p>
+      <div class="ctas">
+        <a class="btn btn-main" href="Andrej_Savcic_CV.pdf" download>Download CV (PDF)</a>
+        <a class="btn btn-line" href="mailto:hello@andrejsavcic.com">Email me</a>
+      </div>
+    </div>
+    <figure class="cv-photo"><img src="img/andrej-savcic.png" alt="Andrej Savcic"></figure>
+{% include results.html %}
+  </section>
+</div>
+
+{% include clients.html %}
+
+<!-- ===== WORK HISTORY ===== -->
+<section id="history" class="w sec">
+  <p class="kicker">Experience</p>
+  <h2>Work history.</h2>
+  <ol class="history">
+    <li><time><span class="now">Jan 2025 to present</span></time><div><h3>Founder and Director · LudoSpark</h3><p>Bucharest</p></div></li>
+    <li><time>Jun 2023 to Nov 2024</time><div><h3>Lead Producer · Maze Theory</h3><p>London</p></div></li>
+    <li><time>Jun 2021 to May 2023</time><div><h3>Senior Producer · Sumo Digital</h3><p>Leamington Spa</p></div></li>
+    <li><time>Nov 2019 to Nov 2020</time><div><h3>Head of Production · 22cans</h3><p>Guildford</p></div></li>
+    <li><time>Dec 2017 to Mar 2019</time><div><h3>Producer · PRELOADED</h3><p>London</p></div></li>
+    <li><time>Jun 2016 to Aug 2017</time><div><h3>VR Project Manager · UNIT9</h3><p>London</p></div></li>
+    <li><time>May 2015 to Jun 2016</time><div><h3>IT Project Manager · UNIT9</h3><p>London</p></div></li>
+  </ol>
+</section>
+
+<!-- ===== SELECTED WORK (shared with the home page) ===== -->
+<section id="work" class="w sec">
+{% include work.html %}
+</section>
+
+<!-- ===== PROOF (shared) ===== -->
+{% include proof.html %}
+
+<!-- ===== SKILLS ===== -->
+<section id="skills" class="w sec">
+  <p class="kicker">Skills</p>
+  <h2>Tools and disciplines.</h2>
+  <dl class="skills">
+    <div><dt>Production leadership</dt><dd>Agile (Scrum, Kanban), roadmapping, OKRs, budgeting, risk mitigation, stakeholder communication, coaching and mentorship, remote collaboration</dd></div>
+    <div><dt>Technical production</dt><dd>JIRA and Confluence (power user), Unity 2019 to 2023, Unreal 4.25 to 5.1, build and release pipelines, branching strategy, CI/CD and QA automation</dd></div>
+    <div><dt>Analytics and ops</dt><dd>Firebase, PlayFab, Unity Analytics, funnel optimisation, A/B testing, KPI dashboards</dd></div>
+    <div><dt>Platforms</dt><dd>PC, PlayStation 5/4, Xbox Series X|S, Steam, Epic, Windows Store, Meta Quest 2/3, PSVR/PSVR2, Pico, iOS/Android</dd></div>
+    <div><dt>Business and publishing</dt><dd>Licensor and IP management, monetisation (F2P, DLC, retention), user acquisition, global release and localisation workflows</dd></div>
+  </dl>
+</section>
+
+<!-- ===== ABOUT (shared) ===== -->
+{% include about.html %}
+
+<!-- ===== EDUCATION AND LANGUAGES ===== -->
+<section id="education" class="w sec">
+  <p class="kicker">Education and languages</p>
+  <h2>Background.</h2>
+  <div class="edu">
+    <div><h3>BSc Games and Multimedia Environments</h3><p>University of Sussex, 2014. Computer-science heavy.</p></div>
+    <div><h3>Languages</h3><p>English, Romanian and Italian. Conversational French.</p></div>
+  </div>
+</section>
+
+<!-- ===== CONTACT ===== -->
+<section id="contact" class="dark">
+  <div class="w contact">
+    <p class="kicker">Contact</p>
+    <h2>Get in touch about a role.</h2>
+    <p class="links"><a href="mailto:hello@andrejsavcic.com">hello@andrejsavcic.com</a> · <a href="https://linkedin.com/in/andrej-savcic">LinkedIn</a></p>
+  </div>
+  <footer><div class="w">Andrej Savcic · Senior / Lead Producer · Bucharest
+    <p class="fine">Client names refer to work delivered while employed by the studios listed above and are shown for reference only.</p></div></footer>
+</section>
+
+</div><!-- /paper -->
+
+{% include scripts.html %}
+</body>
+</html>
