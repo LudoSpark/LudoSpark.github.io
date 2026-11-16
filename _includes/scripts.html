@@ -1,0 +1,544 @@
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script>
+// Hero: crossfade through the work images, led by the headline projects
+(function () {
+  var fig = document.querySelector('.hero figure');
+  if (!fig || !fig.querySelector('figcaption')) return;
+  var first = fig.querySelector('img');
+  var cap = fig.querySelector('figcaption');
+  var lead = ['thief-vr', 'forza-motorsport', 'godus', 'human-fall-flat'];
+  function rank(src) {
+    for (var i = 0; i < lead.length; i++) if (src.indexOf(lead[i]) !== -1) return i;
+    return lead.length;
+  }
+  var slides = [];
+  document.querySelectorAll('.work .card').forEach(function (card) {
+    var img = card.querySelector('.pic img');
+    if (!img) return;
+    var parts = card.querySelector('.meta').textContent.split(' · ');
+    slides.push({ src: img.getAttribute('src'), alt: img.alt, studio: parts[0], role: parts[1], title: card.querySelector('h3').textContent });
+  });
+  slides.sort(function (a, b) { return rank(a.src) - rank(b.src); });
+  if (slides.length < 2) return;
+
+  var box = document.createElement('div');
+  box.className = 'slides';
+  fig.insertBefore(box, first);
+  box.appendChild(first);
+  first.classList.add('on');
+  var imgs = slides.map(function (sl, i) {
+    if (i === 0) return first;
+    var im = document.createElement('img');
+    im.src = sl.src;
+    im.alt = sl.alt;
+    im.loading = 'lazy';
+    box.appendChild(im);
+    return im;
+  });
+
+  var text = document.createElement('span');
+  var dots = document.createElement('div');
+  dots.className = 'dots';
+  cap.textContent = '';
+  cap.appendChild(text);
+  cap.appendChild(dots);
+  var buttons = slides.map(function (sl, i) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.setAttribute('aria-label', 'Show ' + sl.title);
+    b.addEventListener('click', function () { show(i); restart(); });
+    dots.appendChild(b);
+    return b;
+  });
+
+  var cur = 0, timer = null, paused = false;
+  var still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function show(i) {
+    cur = i;
+    imgs.forEach(function (im, k) { im.classList.toggle('on', k === i); });
+    buttons.forEach(function (b, k) { if (k === i) b.setAttribute('aria-current', 'true'); else b.removeAttribute('aria-current'); });
+    var sl = slides[i], strong = document.createElement('strong');
+    strong.textContent = sl.role;
+    text.textContent = '';
+    text.appendChild(strong);
+    text.appendChild(document.createTextNode(' · ' + sl.title + ', ' + sl.studio));
+  }
+  function stop() { clearInterval(timer); timer = null; }
+  function start() { if (!timer && !still && !paused) timer = setInterval(function () { show((cur + 1) % slides.length); }, 4500); }
+  function restart() { stop(); start(); }
+  var pause = document.createElement('button');
+  pause.type = 'button';
+  pause.className = 'pause';
+  function paintPause() {
+    pause.setAttribute('aria-label', paused ? 'Play slideshow' : 'Pause slideshow');
+    pause.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="' + (paused ? 'M8 5v14l11-7z' : 'M7 5h4v14H7zM13 5h4v14h-4z') + '"/></svg>';
+  }
+  pause.addEventListener('click', function () {
+    paused = !paused;
+    paintPause();
+    if (paused) stop(); else start();
+  });
+  paintPause();
+  if (!still) dots.insertBefore(pause, dots.firstChild);
+  ['prev', 'next'].forEach(function (dir) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'nav ' + dir;
+    b.setAttribute('aria-label', dir === 'prev' ? 'Previous project' : 'Next project');
+    b.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="' + (dir === 'prev' ? 'M15 5l-7 7 7 7' : 'M9 5l7 7-7 7') + '"/></svg>';
+    b.addEventListener('click', function () {
+      show((cur + (dir === 'next' ? 1 : slides.length - 1)) % slides.length);
+      restart();
+    });
+    box.appendChild(b);
+  });
+  show(0);
+  start();
+  fig.addEventListener('mouseenter', stop);
+  fig.addEventListener('mouseleave', start);
+  fig.addEventListener('focusin', stop);
+  fig.addEventListener('focusout', start);
+})();
+
+// Work cards: "Full story" opens a dialog instead of growing the grid row
+(function () {
+  var dlg = document.createElement('dialog');
+  dlg.className = 'story';
+  dlg.innerHTML = '<form method="dialog"><button class="close" aria-label="Close">×</button></form><div></div>';
+  document.body.appendChild(dlg);
+  var body = dlg.lastChild;
+  dlg.addEventListener('click', function (e) { if (e.target === dlg) dlg.close(); });
+  document.querySelectorAll('.work .card').forEach(function (card) {
+    var d = card.querySelector('details');
+    if (!d) return;
+    var full = document.createElement('div');
+    full.className = 'full';
+    Array.prototype.forEach.call(d.children, function (n) {
+      if (n.tagName !== 'SUMMARY') full.appendChild(n.cloneNode(true));
+    });
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'more';
+    btn.textContent = 'Full story';
+    card.addEventListener('click', function (e) {
+      if (e.target.closest('a')) return;
+      var copy = card.cloneNode(true);
+      copy.removeChild(copy.querySelector('.more'));
+      copy.appendChild(full.cloneNode(true));
+      var link = copy.querySelector('.full a');
+      var trailer = null;
+      if (link) {
+        link.target = '_blank';
+        link.rel = 'noopener';
+        var cta = document.createElement('div');
+        cta.className = 'story-cta';
+        var holder = link.parentElement;
+        cta.appendChild(link);
+        if (holder && holder.tagName === 'P' && !holder.textContent.trim()) holder.remove();
+        trailer = cta;
+      }
+      body.innerHTML = '';
+      body.appendChild(copy);
+      if (trailer) body.appendChild(trailer);
+      dlg.setAttribute('aria-label', card.querySelector('h3').textContent);
+      dlg.showModal();
+      dlg.scrollTop = 0;
+    });
+    d.replaceWith(btn);
+  });
+})();
+
+// Headline: the last words roll through the moments I cover, animated with GSAP.
+// Choosing an audience (hero buttons, tabs or ?for=studio / ?for=indie) locks the matching wording.
+(function () {
+  var h = document.getElementById('headline'), win = document.getElementById('win');
+  var g = window.gsap;
+  if (!h || !win || !g) return;
+  var words = ['launch date', 'milestone', 'vertical slice', 'publisher pitch', 'certification date'];
+  var pick = { studio: 1, indie: 3 };
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var els = [], chars = [], widths = [], i = 0, ready = false, locked = false, paused = false, pending = null, timer = null, tl = null, bar;
+  var rnd = function (a, b) { return a + Math.random() * (b - a); };
+
+  function measure() { widths = els.map(function (e) { return e.getBoundingClientRect().width; }); }
+  function schedule() {
+    if (locked || reduce) return;
+    timer = setTimeout(function () {
+      if (paused) { schedule(); return; }
+      go((i + 1) % words.length);
+    }, paused ? 600 : rnd(2400, 3600));
+  }
+  function done() {
+    if (pending !== null) { var n = pending; pending = null; go(n); } else schedule();
+  }
+  function go(n) {
+    if (n === i) { done(); return; }
+    var out = chars[i], inn = chars[n];
+    if (reduce) {
+      g.set(out, { yPercent: 170 }); g.set(inn, { yPercent: 0 }); g.set(win, { width: widths[n] }); g.set(bar, { scaleX: 1 });
+      i = n; return;
+    }
+    tl = g.timeline({ onComplete: done });
+    // anticipation: a small dip, then the launch
+    tl.to(out, { yPercent: 14, scaleY: 0.92, duration: 0.14, ease: 'power1.out', stagger: 0.012 });
+    tl.to(out, { yPercent: -170, scaleY: 1.25, rotation: function () { return rnd(-8, 4); }, duration: 0.4, ease: 'power3.in', stagger: { each: 0.018, from: 'start' } }, '>-0.02');
+    // arrival: letters ripple in with overshoot, then settle
+    tl.set(inn, { yPercent: 170, scaleY: 1.25, rotation: function () { return rnd(-6, 10); } }, '-=0.28');
+    tl.to(inn, { yPercent: 0, scaleY: 1, rotation: 0, duration: 0.75, ease: 'back.out(2.2)', stagger: { each: 0.03, from: 'start' } }, '<');
+    tl.to(inn, { scaleY: 0.9, scaleX: 1.06, duration: 0.09, ease: 'sine.out', yoyo: true, repeat: 1, stagger: { each: 0.03, from: 'start' } }, '<+0.32');
+    // the window adjusts a beat early, the underline lags behind
+    tl.to(win, { width: widths[n], duration: 0.7, ease: 'back.out(1.4)' }, '<-0.25');
+    tl.fromTo(bar, { scaleX: 0 }, { scaleX: 1, duration: 0.65, ease: 'expo.out' }, '<+0.35');
+    i = n;
+  }
+  function lock(aud) {
+    if (pick[aud] === undefined) return;
+    locked = true;
+    clearTimeout(timer);
+    if (!ready || (tl && tl.isActive())) { pending = pick[aud]; return; }
+    go(pick[aud]);
+  }
+
+  bar = document.createElement('span'); bar.className = 'bar';
+  win.textContent = '';
+  win.appendChild(bar);
+  words.forEach(function (t) {
+    var w = document.createElement('span'); w.className = 'wd';
+    chars.push(t.split('').map(function (ch) {
+      var c = document.createElement('span'); c.className = 'c'; c.textContent = ch; w.appendChild(c); return c;
+    }));
+    win.appendChild(w); els.push(w);
+  });
+  chars.forEach(function (cs, k) { if (k) g.set(cs, { yPercent: 170 }); });
+  var start = function () {
+    measure();
+    g.set(win, { width: widths[0] });
+    ready = true;
+    if (pending !== null) { var n = pending; pending = null; go(n); } else schedule();
+  };
+  (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(start);
+
+  var rt;
+  window.addEventListener('resize', function () {
+    clearTimeout(rt);
+    rt = setTimeout(function () {
+      if (!ready || (tl && tl.isActive())) return;
+      measure();
+      g.set(win, { width: widths[i] });
+    }, 150);
+  });
+
+  document.querySelectorAll('[data-tab]').forEach(function (b) {
+    b.addEventListener('click', function () { lock(b.dataset.tab); });
+  });
+  h.addEventListener('mouseenter', function () { paused = true; });
+  h.addEventListener('mouseleave', function () { paused = false; });
+  var m = /[?&]for=(studio|indie)/.exec(location.search);
+  if (m) {
+    var t = document.querySelector('[data-tab="' + m[1] + '"]');
+    if (t) setTimeout(function () { t.click(); }, 0);
+  }
+})();
+
+// Hero buttons pick the matching audience tab
+document.querySelectorAll('[data-pick]').forEach(function (a) {
+  a.addEventListener('click', function () {
+    var t = document.querySelector('[data-tab="' + a.dataset.pick + '"]');
+    if (t) t.click();
+  });
+});
+
+// Address bar follows the section being read (no jump, no history entries)
+(function () {
+  var sections = ['work', 'about', 'offers', 'contact']
+    .map(function (id) { return document.getElementById(id); })
+    .filter(Boolean);
+  var current = null, timer = null;
+  function sync() {
+    timer = null;
+    var line = window.innerHeight * 0.35, id = '';
+    sections.forEach(function (sec) { if (sec.getBoundingClientRect().top <= line) id = sec.id; });
+    if (id === current) return;
+    current = id;
+    try { history.replaceState(null, '', id ? '#' + id : location.pathname + location.search); } catch (e) { /* sandboxed frame */ }
+  }
+  window.addEventListener('scroll', function () {
+    if (!timer) timer = setTimeout(sync, 60);
+  }, { passive: true });
+})();
+
+// Email links open a short form; the email is composed on this page and nothing is sent from it
+(function () {
+  var dlg = document.createElement('dialog');
+  dlg.className = 'mail';
+  dlg.setAttribute('aria-label', 'Email me');
+  dlg.innerHTML = '<form method="dialog"><button class="close" aria-label="Close">&times;</button></form>' +
+    '<h3>Email me</h3><p class="mail-addr"></p>' +
+    '<p class="mail-intro">Fill in a few details and your email is ready to send. Nothing is sent from this page.</p>' +
+    '<div class="mail-form">' +
+    '<label for="mf-name">Your name</label><input id="mf-name" type="text" autocomplete="name">' +
+    '<label for="mf-team">Studio or team</label><input id="mf-team" type="text" autocomplete="organization">' +
+    '<label for="mf-stage">Project stage</label><select id="mf-stage"><option value="">Choose one</option>' +
+    '<option>Concept</option><option>Prototype</option><option>Vertical slice</option><option>In production</option><option>Launching</option></select>' +
+    '<label for="mf-help">What would you like help with?</label><textarea id="mf-help" rows="3"></textarea>' +
+    '<label for="mf-link">Link to your game, deck or website (optional)</label><input id="mf-link" type="url" inputmode="url" autocomplete="url">' +
+    '</div>' +
+    '<div class="mail-actions">' +
+    '<a class="btn btn-main" data-act="gmail" target="_blank" rel="noopener">Open in Gmail</a>' +
+    '<a class="btn alt" data-act="app">Open in your email app</a>' +
+    '<button type="button" class="btn alt" data-act="copy">Copy message</button></div>' +
+    '<button type="button" class="linklike" data-act="addr">Copy address only</button>';
+  document.body.appendChild(dlg);
+  dlg.addEventListener('click', function (e) { if (e.target === dlg) dlg.close(); });
+  var q = function (sel) { return dlg.querySelector(sel); };
+  var addrEl = q('.mail-addr'), appEl = q('[data-act="app"]'), gmailEl = q('[data-act="gmail"]');
+  var copyEl = q('[data-act="copy"]'), addrBtn = q('[data-act="addr"]');
+  var fields = { name: q('#mf-name'), team: q('#mf-team'), stage: q('#mf-stage'), help: q('#mf-help'), link: q('#mf-link') };
+  var address = '', subject = 'Enquiry';
+
+  function message() {
+    var lines = ['Hi Andrej,', ''];
+    [['Name', fields.name], ['Studio or team', fields.team], ['Project stage', fields.stage],
+     ['What I would like help with', fields.help], ['Link', fields.link]].forEach(function (f) {
+      var v = f[1].value.trim();
+      if (v) lines.push(f[0] + ': ' + v);
+    });
+    lines.push('', 'Thanks');
+    return lines.join('\n');
+  }
+  function refresh() {
+    var body = encodeURIComponent(message());
+    appEl.href = 'mailto:' + address + '?subject=' + subject + '&body=' + body;
+    gmailEl.href = 'https://mail.google.com/mail/?view=cm&to=' + address + '&su=' + subject + '&body=' + body;
+  }
+  Object.keys(fields).forEach(function (k) {
+    fields[k].addEventListener('input', refresh);
+    fields[k].addEventListener('change', refresh);
+  });
+  function copy(text, btn, idle) {
+    function done(ok) {
+      btn.textContent = ok ? 'Copied' : 'Select the text and press Ctrl+C';
+      setTimeout(function () { btn.textContent = idle; }, 2400);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { done(true); }, function () { done(false); });
+    } else {
+      done(false);
+    }
+  }
+  copyEl.addEventListener('click', function () { copy('To: ' + address + '\nSubject: ' + decodeURIComponent(subject) + '\n\n' + message(), copyEl, 'Copy message'); });
+  addrBtn.addEventListener('click', function () { copy(address, addrBtn, 'Copy address only'); });
+
+  document.querySelectorAll('.email-link').forEach(function (link) {
+    link.addEventListener('click', function (e) {
+      e.preventDefault();
+      var parts = link.getAttribute('href').replace('mailto:', '').split('?');
+      var m = parts[1] && parts[1].match(/subject=([^&]*)/);
+      address = parts[0];
+      subject = m ? m[1] : 'Enquiry';
+      addrEl.textContent = address;
+      refresh();
+      dlg.showModal();
+    });
+  });
+})();
+
+// "Show more" buttons open and close the panel they control
+document.querySelectorAll('.more-toggle').forEach(function (b) {
+  var panel = document.getElementById(b.getAttribute('aria-controls'));
+  if (!panel) return;
+  var label = b.querySelector('span');
+  var closed = label.textContent, opened = b.dataset.open || 'Show fewer';
+  b.addEventListener('click', function () {
+    var open = b.getAttribute('aria-expanded') === 'true';
+    b.setAttribute('aria-expanded', open ? 'false' : 'true');
+    panel.hidden = open;
+    label.textContent = open ? closed : opened;
+  });
+});
+
+// Studio / indie tabs
+document.querySelectorAll('[data-tab]').forEach(function (btn) {
+  btn.addEventListener('click', function () {
+    document.querySelectorAll('[data-tab]').forEach(function (b) { b.setAttribute('aria-selected', b === btn); });
+    document.querySelectorAll('[data-panel]').forEach(function (p) { p.hidden = p.dataset.panel !== btn.dataset.tab; });
+  });
+});
+// Offers | How it works | FAQ, shared by both audiences
+(function () {
+  var sub = 'offers';
+  var sets = document.querySelectorAll('.subtabs');
+  function apply() {
+    document.querySelectorAll('.panel .sub').forEach(function (p) { p.hidden = p.dataset.sub !== sub; });
+    sets.forEach(function (set) {
+      set.querySelectorAll('[data-sub]').forEach(function (b) {
+        var on = b.dataset.sub === sub;
+        b.setAttribute('aria-selected', on ? 'true' : 'false');
+        b.tabIndex = on ? 0 : -1;
+      });
+    });
+  }
+  function choose(name) { sub = name; apply(); }
+  sets.forEach(function (set) {
+    var btns = set.querySelectorAll('[data-sub]');
+    btns.forEach(function (b, i) {
+      b.addEventListener('click', function () { choose(b.dataset.sub); });
+      b.addEventListener('keydown', function (e) {
+        var d = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+        if (!d) return;
+        e.preventDefault();
+        var next = btns[(i + d + btns.length) % btns.length];
+        choose(next.dataset.sub);
+        next.focus();
+      });
+    });
+  });
+  document.querySelectorAll('[data-pick]').forEach(function (a) { a.addEventListener('click', function () { choose('offers'); }); });
+  document.querySelectorAll('a[data-go]').forEach(function (a) {
+    a.addEventListener('click', function (e) {
+      e.preventDefault();
+      choose(a.dataset.go);
+      var top = document.getElementById('offers');
+      if (top) top.scrollIntoView();
+    });
+  });
+  var h = location.hash.replace('#', '');
+  if (h === 'how' || h === 'faq') {
+    choose(h);
+    setTimeout(function () { var top = document.getElementById('offers'); if (top) top.scrollIntoView(); }, 60);
+  } else {
+    apply();
+  }
+})();
+
+// Mobile menu
+(function () {
+  var b = document.querySelector('.menu-btn'), m = document.getElementById('mobile-menu');
+  if (!b || !m) return;
+  function set(open) { b.setAttribute('aria-expanded', open ? 'true' : 'false'); m.hidden = !open; }
+  b.addEventListener('click', function () { set(b.getAttribute('aria-expanded') !== 'true'); });
+  m.addEventListener('click', function (e) { if (e.target.closest('a')) set(false); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') set(false); });
+})();
+
+// Bottom action bar: after the hero, until the contact section is in view
+(function () {
+  var dock = document.getElementById('dock'), hero = document.querySelector('.dark'), contact = document.getElementById('contact');
+  if (!dock || !hero || !contact) return;
+  var t = null;
+  function sync() {
+    t = null;
+    var past = hero.getBoundingClientRect().bottom < 0;
+    var atEnd = contact.getBoundingClientRect().top < window.innerHeight - 60;
+    dock.classList.toggle('show', past && !atEnd);
+  }
+  window.addEventListener('scroll', function () { if (!t) t = setTimeout(sync, 50); }, { passive: true });
+  window.addEventListener('resize', sync);
+  sync();
+})();
+// Phone layout: accordions, "Read more" and swipe dots follow one breakpoint
+(function () {
+  var mq = window.matchMedia('(max-width: 860px)');
+  var syncs = [];
+
+  var mqOffers = window.matchMedia('(max-width: 759px)');
+
+  function toggle(host, clickEl, ariaEl, q) {
+    q = q || mq;
+    clickEl.addEventListener('click', function (e) {
+      if (!q.matches || e.target.closest('a, .body')) return;
+      host.classList.toggle('open');
+      ariaEl.setAttribute('aria-expanded', host.classList.contains('open') ? 'true' : 'false');
+    });
+    ariaEl.addEventListener('keydown', function (e) {
+      if (!q.matches || (e.key !== 'Enter' && e.key !== ' ')) return;
+      e.preventDefault();
+      clickEl.click();
+    });
+    syncs.push(function () {
+      if (q.matches) {
+        ariaEl.setAttribute('role', 'button');
+        ariaEl.tabIndex = 0;
+        ariaEl.setAttribute('aria-expanded', host.classList.contains('open') ? 'true' : 'false');
+      } else {
+        ariaEl.removeAttribute('role');
+        ariaEl.removeAttribute('tabindex');
+        ariaEl.removeAttribute('aria-expanded');
+      }
+    });
+  }
+
+  // Offers collapse on phones only (under 760px); the first step starts open
+  document.querySelectorAll('.offer').forEach(function (o) {
+    if (o.querySelector('.kicker')) o.classList.add('open');
+    toggle(o, o, o.firstElementChild, mqOffers);
+  });
+  document.querySelectorAll('.st').forEach(function (o) { toggle(o, o, o); });
+  document.querySelectorAll('.fit .grid2 > div').forEach(function (o) { toggle(o, o.querySelector('h2'), o.querySelector('h2')); });
+
+  var about = document.querySelector('.about');
+  if (about) {
+    var more = document.createElement('button');
+    more.type = 'button';
+    more.className = 'about-more';
+    more.textContent = 'Read more';
+    more.setAttribute('aria-expanded', 'false');
+    about.querySelector('.about-rest').after(more);
+    more.addEventListener('click', function () {
+      var open = about.classList.toggle('collapsed') === false;
+      more.textContent = open ? 'Show less' : 'Read more';
+      more.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+    syncs.push(function () {
+      about.classList.toggle('collapsed', mq.matches);
+      more.textContent = 'Read more';
+      more.setAttribute('aria-expanded', 'false');
+    });
+  }
+
+  document.querySelectorAll('.swipe').forEach(function (row) {
+    var n = row.children.length;
+    var dots = document.createElement('div');
+    dots.className = 'swipe-dots';
+    dots.setAttribute('aria-hidden', 'true');
+    for (var i = 0; i < n; i++) dots.appendChild(document.createElement('s'));
+    row.after(dots);
+    function paint() {
+      var first = row.children[0];
+      var step = first.offsetWidth + 12;
+      var idx = step > 12 ? Math.min(n - 1, Math.round(row.scrollLeft / step)) : 0;
+      Array.prototype.forEach.call(dots.children, function (d, k) { d.className = k === idx ? 'on' : ''; });
+    }
+    row.addEventListener('scroll', paint, { passive: true });
+    paint();
+    syncs.push(function () {
+      if (mq.matches) { row.tabIndex = 0; row.setAttribute('role', 'region'); row.setAttribute('aria-label', 'Swipe sideways for more'); }
+      else { row.removeAttribute('tabindex'); row.removeAttribute('role'); row.removeAttribute('aria-label'); }
+    });
+  });
+
+  document.querySelectorAll('.faq-item').forEach(function (item) {
+    item.querySelector('summary').addEventListener('click', function (e) { if (!mq.matches) e.preventDefault(); });
+    syncs.push(function () { item.open = !mq.matches; });
+  });
+
+  function syncAll() { syncs.forEach(function (f) { f(); }); }
+  syncAll();
+  if (mq.addEventListener) { mq.addEventListener('change', syncAll); mqOffers.addEventListener('change', syncAll); }
+  else { mq.addListener(syncAll); mqOffers.addListener(syncAll); }
+})();
+// Indie moments: open and show the offer that answers them
+document.querySelectorAll('a[data-offer]').forEach(function (a) {
+  a.addEventListener('click', function (e) {
+    e.preventDefault();
+    var panel = a.closest('.panel');
+    var target = Array.prototype.find.call(panel.querySelectorAll('.offer'), function (o) {
+      return o.querySelector('h3').textContent.trim() === a.dataset.offer;
+    });
+    if (!target) return;
+    target.classList.add('open');
+    if (target.firstElementChild.hasAttribute('aria-expanded')) target.firstElementChild.setAttribute('aria-expanded', 'true');
+    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
+});
+</script>
