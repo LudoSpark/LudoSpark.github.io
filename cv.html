@@ -27,6 +27,14 @@
 /* project slideshow under the intro, the same one as on the home page */
 .hero.cv-head .cv-reel{grid-column:1 / -1;margin:28px 0 0}
 @media (min-width:861px){.hero.cv-head .cv-reel .slides{aspect-ratio:21/9}}
+/* focal points, so the wide crop keeps each title, logo or face in frame */
+.cv-reel .slides img[src$="godus.jpg"]{object-position:50% 0}
+.cv-reel .slides img[src$="human-fall-flat.jpg"]{object-position:50% 0}
+.cv-reel .slides img[src$="peaky-blinders.jpg"]{object-position:50% 12%}
+.cv-reel .slides img[src$="forza-motorsport.jpg"]{object-position:50% 30%}
+.cv-reel .slides img[src$="airbus-elev8.jpg"]{object-position:50% 20%}
+.cv-reel .slides img[src$="happy-studio.jpg"]{object-position:50% 60%}
+.cv-reel .slides img[src$="ancient-dungeon-vr.jpg"]{object-position:50% 40%}
 /* desktop: photo top right beside the name, then the open-to box and intro run the full width below */
 @media (min-width:861px){
   .hero.cv-head{grid-template-rows:auto auto auto 1fr}
