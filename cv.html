@@ -25,6 +25,8 @@
 .cv-contact a:hover{color:var(--accent-light)}
 .cv-open{margin:18px 0 0;padding:12px 16px;border-left:3px solid var(--accent);background:rgba(245,245,242,.04);font-size:16px;color:#C9CCD0;box-sizing:border-box}
 @media (min-width:861px){.hero.cv-head{container-type:inline-size}.cv-open,.hero.cv-head .sub{width:calc(50cqw - .5px);max-width:none;box-sizing:border-box}}
+/* the container above isolates CSS counters, so the section numbers outside the hero start at 02 */
+@media (min-width:861px){.page-cv .paper{counter-reset:sec 1}}
 .cv-open b{margin-right:6px;font-family:var(--mono);font-size:13px;font-weight:400;letter-spacing:.12em;text-transform:uppercase;color:var(--accent-light)}
 .cv-head .sub{max-width:62ch}
 .cv-head .ctas{margin-top:28px}

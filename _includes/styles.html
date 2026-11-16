@@ -767,6 +767,13 @@ footer .w,footer .fine,#contact .owner{color:var(--muted) !important;font-family
   .st::after{display:none !important}
   .tile span{display:block !important}
 }
+/* small phones (360px and under): keep logo, button and menu inside the header */
+@media (max-width:400px){
+  .logo{gap:6px;font-size:18px !important}
+  .logo::before{width:20px;height:20px}
+  nav .pill{padding:10px 9px !important;font-size:11px !important;letter-spacing:.03em}
+  header nav{gap:8px}
+}
 
 /* ===== Offers: collapsed rows under 760px; header line + full-width text 760-1100px; column table from 1101px ===== */
 @media (min-width:760px) and (max-width:1100px){
