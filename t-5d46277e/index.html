@@ -141,6 +141,7 @@ dialog .actions{margin-top:14px}
       <button class="go" id="sMain" type="button" disabled>Start set</button>
       <button class="sq ghost" id="sFlip" type="button" aria-label="Switch camera">⟲</button>
     </div>
+    <button class="ghost" id="sAlt" type="button" hidden>End this set</button>
     <button class="ghost" id="sEnd" type="button">End session</button>
   </div>
 </section>
@@ -182,11 +183,15 @@ const loadVoices=()=>{voices=(speechSynthesis.getVoices()||[]).filter(v=>/^en/i.
   if(!S.voice){const pref=voices.find(v=>/Daniel|Arthur|Google UK English Male|Aaron|Samantha/.test(v.name))||voices[0];if(pref)S.voice=pref.name}};
 if('speechSynthesis' in window){loadVoices();speechSynthesis.onvoiceschanged=loadVoices}
 // Returns true if the line was spoken. ifQuiet: skip it (return false) while Ren is already talking.
-function say(text,{interrupt=true,rate=1.02,ifQuiet=false}={}){
-  if(S.mute||!('speechSynthesis' in window)||!text)return false;
-  if(ifQuiet&&(speechSynthesis.speaking||speechSynthesis.pending))return false;
+// onend: called once when the line has finished (or right away when muted / not spoken).
+function say(text,{interrupt=true,rate=1.02,ifQuiet=false,onend=null}={}){
+  let done=false;const fin=()=>{if(!done){done=true;onend&&onend()}};
+  if(S.mute||!('speechSynthesis' in window)||!text){fin();return false}
+  if(ifQuiet&&(speechSynthesis.speaking||speechSynthesis.pending)){fin();return false}
   if(interrupt)speechSynthesis.cancel();
-  const u=new SpeechSynthesisUtterance(text);const v=voices.find(v=>v.name===S.voice);if(v)u.voice=v;u.rate=rate;speechSynthesis.speak(u);
+  const u=new SpeechSynthesisUtterance(text);const v=voices.find(v=>v.name===S.voice);if(v)u.voice=v;u.rate=rate;
+  if(onend){u.onend=u.onerror=fin;setTimeout(fin,2500+text.split(' ').length*450/rate)} // some phones never fire onend
+  speechSynthesis.speak(u);
   return true;
 }
 const speaking=()=>'speechSynthesis' in window&&speechSynthesis.speaking;
@@ -290,6 +295,17 @@ const torso=J=>{const dx=(J.s.x-J.h.x)*J.face,dy=J.h.y-J.s.y;return deg(Math.ata
 /* ---------- exercise analysers ---------- */
 // Each returns live readings per frame; reps are finalised inside and reported via onRep(rep)
 const CUES={squat:'Hips back, not down',lockout:'Finish tall, squeeze',leanback:"Stand tall, don't lean back",arms:'Arms loose, hips drive',low:'Snap the hips harder',depth:'Sit deeper',chest:'Chest up',far:'Bell tight to your chest'};
+// Second wording, used when the first cue didn't land.
+const CUES2={squat:'Push the hips back, shins stay tall',lockout:'Stand like a plank at the top',leanback:'Ribs down, stop at vertical',arms:'Arms are ropes, let the hips throw it',low:'Snap faster, let the bell float',depth:'Sit down between your heels',chest:'Proud chest, elbows inside the knees',far:'Hug the bell to your chest'};
+// Shown on screen the moment a set pauses (no waiting for the network).
+const FIX={squat:'Your knees are bending a lot at the bottom, so the swing turns into a squat. Push your hips back like shutting a car door with your bum. Shins stay nearly vertical.',
+  lockout:'You are not finishing tall at the top. End every swing like a standing plank: glutes and thighs tight, hips all the way through.',
+  leanback:'You are leaning back at the top. Stand straight with your ribs down. The hips stop at vertical, not past it.',
+  arms:'Your arms are lifting the bell. Keep them long and loose like ropes. The hip snap sends the bell up; the arms only guide it.',
+  low:'The bell is not getting to chest height because the hip snap is soft. Drive the hips through hard and fast, and let the bell float up.',
+  depth:'You are not getting deep enough. Sit down between your heels until your hips are below your knees, chest up.',
+  chest:'Your chest is dropping forward. Keep it proud, bell against your chest, and push your knees out with your elbows.',
+  far:'The bell is drifting away from you. Hold it tight against your chest the whole way down and up.'};
 const FULL={squat:'squatting the swing (knees bending too much at the bottom)',lockout:'not finishing the hips at the top',leanback:'leaning back at the top',arms:'lifting with the arms',low:'bell too low (not enough hip drive)',depth:'squat not deep enough',chest:'chest dropping forward',far:'bell drifting away from the chest'};
 function makeSwing(onRep){
   let ph='top',bot=null,top=null,armed=false;
@@ -327,7 +343,7 @@ function makeGoblet(onRep){
 /* ---------- session ---------- */
 const cv=$('cv'),ctx=cv.getContext('2d'),vid=document.createElement('video');vid.playsInline=true;vid.muted=true;
 let pose=null,poseReady=false,facing='user',stream=null,running=false;
-let sess=null; // {items, i, set, active, reps, an, log, streak, streakFault, cueHeard, lastRepT, restUntil}
+let sess=null; // {items, i, set, active, paused, an, log, coach, nextFocus, lastRepT, resting}
 const BASE='';
 function loadScript(u){return new Promise((ok,no)=>{const s=document.createElement('script');s.src=u;s.onload=ok;s.onerror=no;document.head.appendChild(s)})}
 async function initPose(){
@@ -345,7 +361,7 @@ async function startCam(){
 async function startSession(){
   say(' ');
   S.plan=S.plan||DEFAULT_PLAN;
-  sess={items:S.plan,i:0,set:1,active:false,reps:0,good:0,an:null,log:[],cur:null,streak:0,streakFault:null,cueHeard:{},okFrames:0,badSince:0,lastRepT:0,lastSeen:0,lastCue:0,t0:Date.now()};
+  sess={items:S.plan,i:0,set:1,active:false,reps:0,good:0,an:null,log:[],cur:null,coach:{focus:null,stage:0,cueHeard:null},nextFocus:null,paused:false,resuming:false,okFrames:0,badSince:0,lastRepT:0,lastSeen:0,lastCue:0,t0:Date.now()};
   show('session');$('sLoad').hidden=false;$('sLoad').textContent='Starting camera and pose model…';
   try{await Promise.all([initPose(),startCam()])}
   catch(e){$('sLoad').textContent='Camera or model failed: '+e.message+'. This needs https and camera permission.';return}
@@ -362,66 +378,122 @@ const item=()=>sess.items[sess.i];
 function prepSet(){
   const it=item();$('sEx').textContent=EXN[it.ex];$('sSet').textContent=`Set ${sess.set} of ${it.sets} · ${S.profile.kg} kg`;
   $('sReps').textContent='0';$('sOf').textContent=`of ${it.reps}`;$('sMain').disabled=false;$('sMain').textContent=`Start set ${sess.set}`;
+  if(sess.nextFocus){$('sCap').textContent='Focus this set: '+CUES[sess.nextFocus]}
+}
+const newAnalyser=()=>item().ex==='swing'?makeSwing(onRep):makeGoblet(onRep);
+// 3-2-1 then go: one second per number.
+function countdown(goWord,cb){
+  let n=3;const c=$('sCount');c.classList.add('on');c.textContent=n;say('Three');
+  const tick=setInterval(()=>{n--;if(n>0){c.textContent=n;say(n===2?'Two':'One')}else{clearInterval(tick);c.textContent='Go';say(goWord);setTimeout(()=>c.classList.remove('on'),600);cb()}},1000);
 }
 function startSet(){
-  const it=item();sess.cur={ex:it.ex,set:sess.set,target:it.reps,reps:0,good:0,faults:{},reps_detail:[],stopped_early:false};
-  sess.streak=0;sess.streakFault=null;sess.cueHeard={};$('sMain').disabled=true;
-  sess.an=it.ex==='swing'?makeSwing(onRep):makeGoblet(onRep);
-  let n=3;const c=$('sCount');c.classList.add('on');c.textContent=n;say('Three');
-  const tick=setInterval(()=>{n--;if(n>0){c.textContent=n;say(n===2?'Two':'One')}else{clearInterval(tick);c.textContent='Go';say(it.ex==='swing'?'Hike and swing':'Go');setTimeout(()=>c.classList.remove('on'),500);
-    sess.active=true;sess.lastRepT=performance.now();$('sMain').disabled=false;$('sMain').textContent='Set done'}},900);
+  const it=item();sess.cur={ex:it.ex,set:sess.set,target:it.reps,reps:0,good:0,faults:{},reps_detail:[],pauses:0,stopped_early:false};
+  // If last set had a main fault, this set starts already focused on it (the athlete just heard the cue).
+  const pf=sess.nextFocus;sess.coach={focus:pf||null,stage:pf?1:0,cueHeard:pf?performance.now():null};
+  $('sMain').disabled=true;sess.an=newAnalyser();
+  countdown(it.ex==='swing'?'Hike and swing':'Go',()=>{sess.active=true;sess.lastRepT=performance.now();$('sMain').disabled=false;$('sMain').textContent='Set done'});
 }
-// Speak a fault cue without cutting Ren off, and remember when it will have been heard.
-function cue(f){
-  const t=performance.now(),txt=CUES[f];
-  const silent=S.mute||!('speechSynthesis' in window);
-  if(silent){if(sess.cueHeard[f]==null)sess.cueHeard[f]=t;return} // on mute the on-screen cue is the cue
-  if(say(txt,{interrupt:false,ifQuiet:true,rate:1.05})&&sess.cueHeard[f]==null)sess.cueHeard[f]=t+500+txt.split(' ').length*380;
+/* Coaching, one fault at a time, like a coach standing next to you:
+   fault seen -> cue -> watch the next rep that starts after the cue was heard
+   -> fixed: "Better" ; still there: second cue, worded differently
+   -> still there after that: pause the set (reps kept) and explain the fix.
+   Reps that started before the cue finished are not held against the athlete. */
+function coachRep(st,r,now){
+  const t0=r.t0??now,has=f=>r.faults.includes(f);
+  if(!st.focus){
+    if(!r.faults.length)return{action:'count'};
+    st.focus=r.faults[0];st.stage=1;st.cueHeard=null;return{action:'cue',f:st.focus};
+  }
+  const f=st.focus;
+  if(st.cueHeard==null){ // the cue didn't get spoken (Ren was busy): try again, or let it go if fixed
+    if(has(f))return{action:'cue',f};
+    st.focus=null;st.stage=0;return{action:'count'};
+  }
+  if(t0<st.cueHeard)return{action:'wait'}; // this rep began before they heard the cue
+  if(!has(f)){st.focus=null;st.stage=0;st.cueHeard=null;return{action:'praise',f}}
+  if(st.stage===1){st.stage=2;st.cueHeard=null;return{action:'cue',f}}
+  return{action:'pause',f};
 }
-// Early stop: the same fault on 3 reps in a row, each started after the cue for it was heard.
-function judgeRep(st,r,now){
-  const f0=r.faults.length?(r.faults.includes(st.streakFault)?st.streakFault:r.faults[0]):null;
-  if(!f0){st.streak=0;st.streakFault=null;return{f0,stop:false}}
-  const heard=st.cueHeard[f0],counts=heard!=null&&heard<=(r.t0??now);
-  st.streak=counts?(st.streakFault===f0?st.streak:0)+1:0;st.streakFault=f0;
-  return{f0,stop:st.streak>=3};
+// Speak the cue for the current stage without cutting Ren off; remember when it will have been heard.
+function speakCue(f){
+  const st=sess.coach,txt=(st.stage===2?CUES2:CUES)[f],t=performance.now();
+  if(S.mute||!('speechSynthesis' in window)){st.cueHeard=t;return} // on mute, the on-screen cue is the cue
+  st.cueHeard=say(txt,{interrupt:false,ifQuiet:true,rate:1.05})?t+500+txt.split(' ').length*380:null;
 }
 function onRep(r){
-  if(!sess||!sess.active)return;const c=sess.cur,now=performance.now();c.reps++;sess.lastRepT=now;
-  if(!r.faults.length)c.good++;else for(const f of r.faults)c.faults[f]=(c.faults[f]||0)+1;
-  c.reps_detail.push({n:c.reps,faults:r.faults,...r.m});
+  if(!sess||!sess.active||sess.paused)return;const c=sess.cur,now=performance.now();c.reps++;sess.lastRepT=now;
+  const settle=c.reps===1; // first swing out of the hike: counted, never coached
+  if(!r.faults.length)c.good++;else if(!settle)for(const f of r.faults)c.faults[f]=(c.faults[f]||0)+1;
+  c.reps_detail.push({n:c.reps,faults:r.faults,...(settle?{settle_rep:true}:{}),...r.m});
   $('sReps').textContent=c.reps;
-  const{f0,stop}=judgeRep(sess,r,now);
-  const v=$('sVerdict');v.className='verdict '+(f0?'bad':'ok');v.textContent=f0?'Fix: '+CUES[f0]:'Clean rep';
-  if(stop){say('Stop there. Park the bell. Form went.');c.stopped_early='three reps in a row with '+FULL[f0]+', after being cued';endSet();return}
+  const a=settle?{action:'count'}:coachRep(sess.coach,r,now);
+  const shown=sess.coach.focus&&r.faults.includes(sess.coach.focus)?sess.coach.focus:r.faults[0];
+  const v=$('sVerdict');v.className='verdict '+(r.faults.length&&!settle?'bad':'ok');
+  v.textContent=settle?'Settling in':a.action==='praise'?'Better':r.faults.length?'Fix: '+(sess.coach.stage===2&&shown===sess.coach.focus?CUES2:CUES)[shown]:'Clean rep';
   if(c.reps>=c.target){say(`${c.reps}. Park it.`);endSet();return}
-  if(f0)cue(f0);else say(String(c.reps),{interrupt:false,ifQuiet:true,rate:1.15});
+  if(a.action==='cue')speakCue(a.f);
+  else if(a.action==='praise')say("Better. That's it.",{interrupt:false,ifQuiet:true});
+  else if(a.action==='pause')pauseSet(a.f);
+  else if(!r.faults.length)say(String(c.reps),{interrupt:false,ifQuiet:true,rate:1.15});
+}
+// Pause instead of ending: the athlete parks the bell, Ren explains the fix, then they resume the same set.
+function pauseSet(f){
+  const c=sess.cur;sess.paused=f;c.pauses++;(c.pause_faults=c.pause_faults||[]).push(FULL[f]);
+  say('Pause there. Park the bell.');
+  const v=$('sVerdict');v.className='verdict bad';v.textContent='Paused: '+CUES[f];
+  $('sCap').textContent=FIX[f];
+  $('sMain').textContent='Resume set';$('sMain').disabled=false;$('sAlt').hidden=false;
+  ask('pause',{...baseCtx(),paused_for:FULL[f],set_so_far:{exercise:EXN[c.ex],set:c.set,target:c.target,reps:c.reps,clean_reps:c.good,last_reps:c.reps_detail.slice(-4)}})
+    .then(r=>{if(sess&&sess.paused===f&&!sess.resuming&&r.say){$('sCap').textContent=r.say;say(r.say,{interrupt:false})}})
+    .catch(()=>{if(sess&&sess.paused===f&&!sess.resuming)say(FIX[f],{interrupt:false})});
+}
+function resumeSet(){
+  const f=sess.paused;sess.resuming=true;$('sAlt').hidden=true;$('sMain').disabled=true; // still paused until "Go"
+  speechSynthesis?.cancel?.();
+  sess.an=newAnalyser();
+  // They just had the full explanation: next bad rep gets the second cue, then another pause if needed.
+  sess.coach={focus:f,stage:1,cueHeard:performance.now()};
+  $('sCap').textContent='Focus: '+CUES[f];
+  countdown('Hike and swing',()=>{sess.paused=false;sess.resuming=false;sess.lastRepT=performance.now();$('sMain').disabled=false;$('sMain').textContent='Set done';$('sVerdict').className='verdict ok';$('sVerdict').textContent='Tracking you'});
 }
 async function endSet(){
-  if(!sess.active)return;sess.active=false;const c=sess.cur;sess.log.push(c);
+  if(!sess.active)return;sess.active=false;const c=sess.cur,pausedFor=sess.paused;sess.paused=false;sess.resuming=false;sess.log.push(c);
+  $('sAlt').hidden=true;
+  if(pausedFor)c.stopped_early='ended after a pause for '+FULL[pausedFor];
   const it=item();const last=sess.set>=it.sets;const nextItem=last?sess.items[sess.i+1]:it;
+  // The fault to focus on next set: the most frequent one this set (same exercise only).
+  const top=Object.entries(c.faults).sort((a,b)=>b[1]-a[1])[0];
+  sess.nextFocus=!last&&top?top[0]:null;
   $('sMain').disabled=true;$('sMain').textContent='Ren is watching the replay…';
   const summary={exercise:EXN[c.ex],set:c.set,of:it.sets,target:c.target,reps:c.reps,clean_reps:c.good,
-    faults:Object.fromEntries(Object.entries(c.faults).map(([k,n])=>[FULL[k],n])),rep_angles:c.reps_detail,stopped_early:c.stopped_early||false,bell_kg:S.profile.kg,
+    faults:Object.fromEntries(Object.entries(c.faults).map(([k,n])=>[FULL[k],n])),rep_angles:c.reps_detail,
+    paused_mid_set:c.pauses?{times:c.pauses,for:c.pause_faults}:false,stopped_early:c.stopped_early||false,bell_kg:S.profile.kg,
+    focus_next_set:sess.nextFocus?CUES[sess.nextFocus]:null,
     next:nextItem?(last?`next exercise: ${EXN[nextItem.ex]} ${nextItem.sets}x${nextItem.reps}`:`set ${sess.set+1} of ${it.sets}`):'that was the last set',rest_seconds:it.rest};
   let line=`${c.good} clean out of ${c.reps}.`;
   try{const r=await ask('set',{...baseCtx(),set_result:summary});if(r.say)line=r.say}catch(e){}
-  $('sCap').textContent=line;say(line);
   if(last){sess.i++;sess.set=1}else sess.set++;
-  if(sess.i>=sess.items.length){$('sMain').textContent='Finish session';$('sMain').disabled=false;$('sMain').onclick=null;sess.done=true;return}
-  // rest countdown
-  let left=it.rest;$('sMain').disabled=false;
-  const upd=()=>{$('sMain').innerHTML=`<span class="rest">Rest ${left}s</span> · tap to go`};upd();
-  clearInterval(sess.restT);sess.restT=setInterval(()=>{left--;if(left===10)say('Ten seconds.',{interrupt:false});if(left<=0){clearInterval(sess.restT);prepSet();say('Up you get.',{interrupt:false})}else upd()},1000);
-  sess.resting=true;
+  $('sCap').textContent=line;
+  if(sess.i>=sess.items.length){say(line);$('sMain').textContent='Finish session';$('sMain').disabled=false;sess.done=true;return}
+  // Rest starts once Ren has finished talking, so his feedback doesn't eat the rest.
+  sess.resting=true;$('sMain').disabled=false;$('sMain').textContent='Rest · tap to skip';
+  say(line,{onend:()=>{if(!sess||!sess.resting)return;
+    let left=it.rest;const upd=()=>{$('sMain').innerHTML=`<span class="rest">Rest ${left}s</span> · tap to skip`};upd();
+    clearInterval(sess.restT);sess.restT=setInterval(()=>{left--;
+      if(left===10)say('Ten seconds.',{interrupt:false});
+      if(left<=0){clearInterval(sess.restT);sess.resting=false;prepSet();
+        say(sess.nextFocus?`Rest's up. Focus this set: ${CUES[sess.nextFocus]}. Start when you're set.`:`Rest's up. Start when you're set.`,{interrupt:false})}
+      else upd()},1000)}});
 }
 $('sMain').addEventListener('click',()=>{
   if(!sess)return;
   if(sess.done)return finishSession();
+  if(sess.paused&&!sess.resuming)return resumeSet();
   if(sess.active)return endSet();
-  if(sess.resting){clearInterval(sess.restT);sess.resting=false;prepSet()}
+  if(sess.resting){clearInterval(sess.restT);sess.resting=false;speechSynthesis?.cancel?.();prepSet();return} // skip rest -> back to "Start set"
   startSet();
 });
+$('sAlt').addEventListener('click',()=>{if(sess&&sess.paused&&!sess.resuming)endSet()});
 $('sEnd').addEventListener('click',()=>{if(sess&&sess.active){sess.active=false;sess.log.push(sess.cur)}finishSession()});
 hookMic($('sMic'),async t=>{addMsg('me',t);$('sCap').textContent='…';try{const r=await ask('chat',{...baseCtx(),during_session:true,chat:S.chat.slice(-8).map(m=>({from:m.who==='me'?'athlete':'coach',text:m.text}))});if(r.say){addMsg('ren',r.say);$('sCap').textContent=r.say;say(r.say)}}catch(e){}});
 async function finishSession(){
@@ -446,7 +518,8 @@ function onResults(res){
   if(!ok){
     // Not scoring anything while the whole body isn't in the picture.
     sess.okFrames=0;if(!sess.badSince)sess.badSince=t;
-    if(sess.active&&t-sess.badSince>600&&!sess.anReset){sess.an=item().ex==='swing'?makeSwing(onRep):makeGoblet(onRep);sess.anReset=true} // drop half-seen reps
+    if(sess.active&&t-sess.badSince>600&&!sess.anReset){sess.an=newAnalyser();sess.anReset=true} // drop half-seen reps
+    if(sess.paused)return; // parked and listening: leave the pause message on screen
     $('sVerdict').className='verdict';$('sVerdict').textContent=L?'Show your whole side':'Get in frame';
     if(sess.active&&t-sess.badSince>2000&&t-sess.lastCue>6000){sess.lastCue=t;say('Step back. I need to see all of you, side-on.',{interrupt:false,ifQuiet:true})}
     return}
@@ -454,9 +527,10 @@ function onResults(res){
   if(sess.okFrames<6)return; // wait for a steady view before scoring
   sess.lastSeen=t;
   const vt=$('sVerdict').textContent;
-  if(vt==='Show your whole side'||vt==='Get in frame'||(!sess.active&&!sess.resting&&vt!=='Ready')){$('sVerdict').className='verdict ok';$('sVerdict').textContent=sess.active?'Tracking you':'Ready'}
-  let live=null;if(sess.active&&sess.an)live=sess.an.frame(J,t);
-  if(sess.active&&sess.cur.reps>0&&t-sess.lastRepT>15000){sess.cur.stopped_early=false;endSet()}
+  if(!sess.paused&&(vt==='Show your whole side'||vt==='Get in frame'||(!sess.active&&!sess.resting&&vt!=='Ready'))){$('sVerdict').className='verdict ok';$('sVerdict').textContent=sess.active?'Tracking you':'Ready'}
+  let live=null;if(sess.active&&!sess.paused&&sess.an)live=sess.an.frame(J,t);
+  // Bell parked for 20 s mid-set (not paused): treat the set as done.
+  if(sess.active&&!sess.paused&&sess.cur.reps>0&&t-sess.lastRepT>20000){sess.cur.stopped_early=false;endSet()}
   // skeleton
   const X=p=>mirror?W-p.x:p.x,lw=Math.max(5,W/120),last=sess.cur?.reps_detail?.at(-1),bad=new Set(last&&sess.active?last.faults:[]);
   const badJ={squat:['k'],lockout:['h'],leanback:['s','h'],arms:['e'],low:['w'],depth:['k'],chest:['s','h'],far:['w']};
@@ -471,7 +545,7 @@ function onResults(res){
 
 /* ---------- boot ---------- */
 if(S.profile){setBell(S.profile.kg);goHome()}else{setBell(16);show('gate')}
-window.__kb={makeSwing,makeGoblet,joints,bodyOK,judgeRep,setWH:(w,h)=>{W=w;H=h}};
+window.__kb={makeSwing,makeGoblet,joints,bodyOK,coachRep,setWH:(w,h)=>{W=w;H=h}};
 }
 </script>
 </body>
