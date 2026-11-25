@@ -41,9 +41,11 @@ If your site is not served from `https://andrejsavcic.com` or `https://www.andre
 
 ## How a session goes
 
-Check in → Ren greets you and proposes a plan → Start session → prop the phone side-on, 2 to 3 metres away, whole body in view → Start set (3, 2, 1) → Ren counts reps and calls faults live → set ends at the target, or early after 3 bad reps in a row → Ren reacts to the set → rest timer → next set → End session → debrief, and Ren updates its private notes about you.
+The full design is in `FLOW.md`. In short:
 
-Hold the mic button to talk to Ren where the phone's browser supports speech input; typing always works.
+Check in → Start session → prop the phone side-on, 2 to 3 metres away, and Ren tells you when he can see you → 2-minute warm-up (5 hip hinges, 5 light swings; skippable) → Ren briefs the exercise → stand still in position and he counts you in → during the set he coaches one fault at a time: a cue, a second cue worded differently, then a pause to park the bell and fix it (reps are kept; get back in position to carry on) → he reacts to the set → rest starts once he's finished talking → next set → debrief, and Ren updates his notes about you.
+
+Hands-free where the phone supports speech input: say "go", "wait", "pause", "stop", "skip", "repeat" or "end session". Saying "ouch", "pain" or "hurts" stops the exercise straight away. Taps always work too. The screen stays awake during a session.
 
 ## What Ren checks
 

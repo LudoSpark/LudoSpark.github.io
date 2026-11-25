@@ -64,7 +64,11 @@ label{display:grid;gap:6px;font-size:14px;color:var(--mute)}
 .big{font-size:72px;line-height:.9;font-variant-numeric:tabular-nums}
 .reps .of{font-size:14px;color:#ddd}
 .dock{position:absolute;left:0;right:0;bottom:0;padding:40px 14px max(14px,env(safe-area-inset-bottom));background:linear-gradient(#0000,#000d);display:grid;gap:10px}
-.caption{font-size:18px;font-weight:500;min-height:2.4em;text-shadow:0 1px 3px #000}
+.caption{font-size:20px;font-weight:500;min-height:2.4em;text-shadow:0 1px 3px #000}
+[hidden]{display:none!important}
+.chips{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+.pill{font:600 12px Inter,sans-serif;padding:2px 8px;border-radius:99px;background:#fff2;color:#fff}
+.pill.live{background:var(--ok);color:#06140d}
 .caption b{color:var(--bell)}
 .verdict{display:inline-block;font:700 14px Inter,sans-serif;padding:3px 10px;border-radius:99px;background:#fff2}
 .verdict.ok{background:var(--ok);color:#06140d}.verdict.bad{background:var(--bad);color:#fff}
@@ -130,7 +134,8 @@ dialog .actions{margin-top:14px}
   <div class="loading" id="sLoad">Starting camera and pose model…</div>
   <div class="count" id="sCount"></div>
   <div class="hud">
-    <div><div class="ex-name" id="sEx">Swing</div><div class="setinfo" id="sSet">Set 1 of 3 · 16 kg</div></div>
+    <div><div class="ex-name" id="sEx">Swing</div><div class="setinfo" id="sSet">Set 1 of 3 · 16 kg</div>
+      <div class="chips"><span class="pill live" id="sMicOn" hidden>🎙 Listening</span><span class="pill" id="sOff" hidden>Offline</span></div></div>
     <div class="reps"><div class="big" id="sReps">0</div><div class="of" id="sOf">of 10</div></div>
   </div>
   <div class="dock">
@@ -182,26 +187,54 @@ const loadVoices=()=>{voices=(speechSynthesis.getVoices()||[]).filter(v=>/^en/i.
   $('stVoice').innerHTML=voices.map(v=>`<option value="${esc(v.name)}"${v.name===S.voice?' selected':''}>${esc(v.name)} (${esc(v.lang)})</option>`).join('')||'<option>Default</option>';
   if(!S.voice){const pref=voices.find(v=>/Daniel|Arthur|Google UK English Male|Aaron|Samantha/.test(v.name))||voices[0];if(pref)S.voice=pref.name}};
 if('speechSynthesis' in window){loadVoices();speechSynthesis.onvoiceschanged=loadVoices}
-// Returns true if the line was spoken. ifQuiet: skip it (return false) while Ren is already talking.
-// onend: called once when the line has finished (or right away when muted / not spoken).
-function say(text,{interrupt=true,rate=1.02,ifQuiet=false,onend=null}={}){
-  let done=false;const fin=()=>{if(!done){done=true;onend&&onend()}};
-  if(S.mute||!('speechSynthesis' in window)||!text){fin();return false}
-  if(ifQuiet&&(speechSynthesis.speaking||speechSynthesis.pending)){fin();return false}
-  if(interrupt)speechSynthesis.cancel();
-  const u=new SpeechSynthesisUtterance(text);const v=voices.find(v=>v.name===S.voice);if(v)u.voice=v;u.rate=rate;
-  if(onend){u.onend=u.onerror=fin;setTimeout(fin,2500+text.split(' ').length*450/rate)} // some phones never fire onend
-  speechSynthesis.speak(u);
-  return true;
+/* Ren's voice: one queue with priorities (FLOW.md section 4).
+   SAFETY and CONTROL cut in over anything less urgent; TALK and CUE wait their turn
+   (a CUE expires if it can't be said soon); PRAISE and COUNT are only said into silence. */
+const LV={SAFETY:0,CONTROL:1,TALK:2,CUE:3,PRAISE:4,COUNT:5};
+const V={cur:null,q:[],lastLine:'',quietAt:0,n:0,fast:false};
+const vBusy=()=>!!V.cur;
+function vNext(){
+  const t=performance.now();
+  V.q=V.q.filter(it=>{if(it.expire&&t>it.expire){it.fin(false);return false}return true});
+  V.q.sort((a,b)=>a.lvl-b.lvl||a.n-b.n);
+  const it=V.q.shift();if(it)vStart(it);
 }
-const speaking=()=>'speechSynthesis' in window&&speechSynthesis.speaking;
+function vStart(it){
+  V.cur=it;if(it.text.trim())V.lastLine=it.text;
+  const end=()=>{if(V.cur!==it)return;V.cur=null;V.quietAt=performance.now();it.fin(true);vNext()};
+  const words=it.text.split(' ').length;
+  if(S.mute||!('speechSynthesis' in window)){ // captions only: give reading time instead of speaking
+    it.timer=setTimeout(end,V.fast?5:900+words*260);return}
+  const u=new SpeechSynthesisUtterance(it.text);const v=voices.find(v=>v.name===S.voice);if(v)u.voice=v;u.rate=it.rate;
+  u.onend=u.onerror=end;it.timer=setTimeout(end,2500+words*450/it.rate); // some phones never fire onend
+  speechSynthesis.speak(u);
+}
+// onend(spoken) runs exactly once; spoken=false if the line was dropped, expired or cut off.
+function speak(text,{lvl=LV.TALK,rate=1.02,onend=null,expire=0}={}){
+  if(!text)return false;
+  let done=false;const it={text,lvl,rate,n:V.n++,expire:expire?performance.now()+expire:0};
+  it.fin=s=>{if(done)return;done=true;clearTimeout(it.timer);onend&&onend(s)};
+  if(V.cur){
+    if(lvl<=LV.CONTROL&&V.cur.lvl>lvl){
+      const old=V.cur;V.cur=null;clearTimeout(old.timer);if('speechSynthesis' in window)speechSynthesis.cancel();old.fin(false);
+      V.q=V.q.filter(x=>{if(x.lvl>LV.TALK){x.fin(false);return false}return true}); // stale cues, praise, counts
+      vStart(it);return true}
+    if(lvl>=LV.PRAISE){it.fin(false);return false}
+    V.q.push(it);return true}
+  vStart(it);return true;
+}
+// Stop talking and forget everything queued. Their onend callbacks are NOT run:
+// whoever hushes is moving the session on, and stale callbacks must not move it again.
+function hush(){for(const x of [V.cur,...V.q])if(x){clearTimeout(x.timer);x.fin=()=>{}}V.cur=null;V.q=[];if('speechSynthesis' in window)speechSynthesis.cancel()}
+// Home-screen helper: a new line replaces whatever Ren was saying.
+function say(text,{interrupt=true,rate=1.02,onend=null}={}){if(interrupt)hush();return speak(text,{lvl:interrupt?LV.CONTROL:LV.TALK,rate,onend})}
 
 /* ---------- speech input (where the browser supports it) ---------- */
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-function hookMic(btn,onText){
+function hookMic(btn,onText,{before=null,after=null}={}){
   if(!SR)return;btn.hidden=false;let rec=null;
-  const start=e=>{e.preventDefault();if(rec)return;speechSynthesis.cancel();rec=new SR();rec.lang='en-GB';rec.interimResults=false;
-    rec.onresult=ev=>{const t=ev.results[0][0].transcript;if(t)onText(t)};rec.onend=()=>{btn.classList.remove('live');rec=null};
+  const start=e=>{e.preventDefault();if(rec)return;hush();before&&before();rec=new SR();rec.lang='en-GB';rec.interimResults=false;
+    rec.onresult=ev=>{const t=ev.results[0][0].transcript;if(t)onText(t)};rec.onend=()=>{btn.classList.remove('live');rec=null;after&&after()};
     try{rec.start();btn.classList.add('live')}catch(err){rec=null}};
   const stop=()=>{if(rec)rec.stop()};
   btn.addEventListener('pointerdown',start);btn.addEventListener('pointerup',stop);btn.addEventListener('pointerleave',stop);
@@ -340,10 +373,13 @@ function makeGoblet(onRep){
     return{knee,lean}}}
 }
 
-/* ---------- session ---------- */
+/* ---------- session: one state machine, as described in FLOW.md ----------
+   setup -> warmup -> brief -> ready -> countdown -> working <-> paused -> review -> rest -> brief ... -> cooldown
+   plus "pain" (stop everything). Each state has ENTER (what Ren says, what the screen shows)
+   and FRAME (what the camera watches for, per video frame). go(state) is the only way to change state. */
 const cv=$('cv'),ctx=cv.getContext('2d'),vid=document.createElement('video');vid.playsInline=true;vid.muted=true;
-let pose=null,poseReady=false,facing='user',stream=null,running=false;
-let sess=null; // {items, i, set, active, paused, an, log, coach, nextFocus, lastRepT, resting}
+let pose=null,poseReady=false,facing='user',stream=null,running=false,wake=null;
+let sess=null;
 const BASE='';
 function loadScript(u){return new Promise((ok,no)=>{const s=document.createElement('script');s.src=u;s.onload=ok;s.onerror=no;document.head.appendChild(s)})}
 async function initPose(){
@@ -358,46 +394,50 @@ async function startCam(){
   stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:facing,width:{ideal:1280},height:{ideal:720},resizeMode:'none'},audio:false});
   vid.srcObject=stream;await vid.play();W=vid.videoWidth;H=vid.videoHeight;cv.width=W;cv.height=H;
 }
-async function startSession(){
-  say(' ');
-  S.plan=S.plan||DEFAULT_PLAN;
-  sess={items:S.plan,i:0,set:1,active:false,reps:0,good:0,an:null,log:[],cur:null,coach:{focus:null,stage:0,cueHeard:null},nextFocus:null,paused:false,resuming:false,okFrames:0,badSince:0,lastRepT:0,lastSeen:0,lastCue:0,t0:Date.now()};
-  show('session');$('sLoad').hidden=false;$('sLoad').textContent='Starting camera and pose model…';
-  try{await Promise.all([initPose(),startCam()])}
-  catch(e){$('sLoad').textContent='Camera or model failed: '+e.message+'. This needs https and camera permission.';return}
-  $('sLoad').hidden=true;running=true;loop();prepSet();
-  say(`Phone side-on, two to three metres away, whole body in view. Tap start when you're set.`);
-}
-$('sFlip').addEventListener('click',async()=>{facing=facing==='user'?'environment':'user';try{await startCam()}catch(e){}});
-async function loop(){
-  if(!running)return;
-  if(poseReady&&vid.readyState>=2){try{await pose.send({image:vid})}catch(e){}}
-  requestAnimationFrame(loop);
-}
+// Keep the screen awake for the whole session (a sleeping screen kills the camera).
+async function keepAwake(){try{if('wakeLock' in navigator&&!wake&&document.visibilityState==='visible'){wake=await navigator.wakeLock.request('screen');wake.addEventListener('release',()=>{wake=null})}}catch(e){}}
+document.addEventListener('visibilitychange',()=>{if(sess&&document.visibilityState==='visible')keepAwake()});
+
 const item=()=>sess.items[sess.i];
-function prepSet(){
-  const it=item();$('sEx').textContent=EXN[it.ex];$('sSet').textContent=`Set ${sess.set} of ${it.sets} · ${S.profile.kg} kg`;
-  $('sReps').textContent='0';$('sOf').textContent=`of ${it.reps}`;$('sMain').disabled=false;$('sMain').textContent=`Start set ${sess.set}`;
-  if(sess.nextFocus){$('sCap').textContent='Focus this set: '+CUES[sess.nextFocus]}
-}
 const newAnalyser=()=>item().ex==='swing'?makeSwing(onRep):makeGoblet(onRep);
-// 3-2-1 then go: one second per number.
-function countdown(goWord,cb){
-  let n=3;const c=$('sCount');c.classList.add('on');c.textContent=n;say('Three');
-  const tick=setInterval(()=>{n--;if(n>0){c.textContent=n;say(n===2?'Two':'One')}else{clearInterval(tick);c.textContent='Go';say(goWord);setTimeout(()=>c.classList.remove('on'),600);cb()}},1000);
+const cap=t=>{$('sCap').textContent=t};
+const chip=(t,cls='')=>{const v=$('sVerdict');v.className='verdict '+cls;v.textContent=t};
+const mainBtn=(t,dis=false)=>{const b=$('sMain');b.textContent=t;b.disabled=dis};
+const altBtn=t=>{const b=$('sAlt');b.hidden=!t;if(t)b.textContent=t};
+const hud=(ex,set,reps,of)=>{$('sEx').textContent=ex;$('sSet').textContent=set;$('sReps').textContent=reps;$('sOf').textContent=of};
+const ifState=(st,fn)=>()=>{if(sess&&sess.state===st)fn()};
+function logE(e,x={}){if(sess&&sess.events.length<3000)sess.events.push({t:Math.round((Date.now()-sess.t0)/100)/10,e,...x})}
+// Side-on: the two shoulders nearly overlap compared with the torso length.
+const sideOn=(L,J)=>Math.abs(L[11].x-L[12].x)*W<.45*Math.hypot(J.s.x-J.h.x,J.s.y-J.h.y);
+function frameHint(L,J){
+  if(!L||!J)return'Get in frame';
+  if(!inView(J.a))return"I can't see your feet. Step back, or tilt the phone down";
+  if(!inView(J.s))return'Step back, your top half is cut off';
+  if((J.a.y-J.s.y)<.3*H)return'Come a bit closer';
+  if(!bodyOK(J))return'Step back so I can see all of you';
+  if(!sideOn(L,J))return'Turn side-on to the phone';
+  return null;
 }
-function startSet(){
-  const it=item();sess.cur={ex:it.ex,set:sess.set,target:it.reps,reps:0,good:0,faults:{},reps_detail:[],pauses:0,stopped_early:false};
-  // If last set had a main fault, this set starts already focused on it (the athlete just heard the cue).
-  const pf=sess.nextFocus;sess.coach={focus:pf||null,stage:pf?1:0,cueHeard:pf?performance.now():null};
-  $('sMain').disabled=true;sess.an=newAnalyser();
-  countdown(it.ex==='swing'?'Hike and swing':'Go',()=>{sess.active=true;sess.lastRepT=performance.now();$('sMain').disabled=false;$('sMain').textContent='Set done'});
+// An AI line with a time limit: spoken if it arrives in time, otherwise the fixed line is spoken
+// (a late AI line is still shown). Ignored entirely if the session has moved on.
+function aiLine(kind,context,fallback,{limit=3000,lvl=LV.TALK,onend=null}={}){
+  const token=sess.token;let settled=false;
+  const done=text=>{settled=true;cap(text);speak(text,{lvl,onend})};
+  const timer=setTimeout(()=>{if(!settled&&sess&&sess.token===token)done(fallback)},limit);
+  ask(kind,{...baseCtx(),...context}).then(r=>{$('sOff').hidden=true;
+      if(!sess||sess.token!==token||!r.say)return;
+      if(settled){cap(r.say);return}
+      clearTimeout(timer);done(r.say)})
+    .catch(()=>{$('sOff').hidden=false;if(!settled&&sess&&sess.token===token){clearTimeout(timer);done(fallback)}});
 }
-/* Coaching, one fault at a time, like a coach standing next to you:
-   fault seen -> cue -> watch the next rep that starts after the cue was heard
-   -> fixed: "Better" ; still there: second cue, worded differently
-   -> still there after that: pause the set (reps kept) and explain the fix.
-   Reps that started before the cue finished are not held against the athlete. */
+function go(st,arg){
+  if(!sess)return;
+  clearInterval(sess.tick);sess.tick=null;
+  sess.state=st;sess.token++;sess.enteredAt=performance.now();logE('state',{s:st});
+  ENTER[st](arg);
+}
+
+/* ----- coaching during a set: one fault at a time (FLOW.md section 5) ----- */
 function coachRep(st,r,now){
   const t0=r.t0??now,has=f=>r.faults.includes(f);
   if(!st.focus){
@@ -405,139 +445,333 @@ function coachRep(st,r,now){
     st.focus=r.faults[0];st.stage=1;st.cueHeard=null;return{action:'cue',f:st.focus};
   }
   const f=st.focus;
-  if(st.cueHeard==null){ // the cue didn't get spoken (Ren was busy): try again, or let it go if fixed
+  if(st.cueHeard==null){ // the cue never got said: say it now, or let it go if it's already fixed
     if(has(f))return{action:'cue',f};
     st.focus=null;st.stage=0;return{action:'count'};
   }
-  if(t0<st.cueHeard)return{action:'wait'}; // this rep began before they heard the cue
+  if(t0<st.cueHeard)return{action:'wait'}; // rep began before the cue finished: not held against them
   if(!has(f)){st.focus=null;st.stage=0;st.cueHeard=null;return{action:'praise',f}}
   if(st.stage===1){st.stage=2;st.cueHeard=null;return{action:'cue',f}}
   return{action:'pause',f};
 }
-// Speak the cue for the current stage without cutting Ren off; remember when it will have been heard.
 function speakCue(f){
-  const st=sess.coach,txt=(st.stage===2?CUES2:CUES)[f],t=performance.now();
-  if(S.mute||!('speechSynthesis' in window)){st.cueHeard=t;return} // on mute, the on-screen cue is the cue
-  st.cueHeard=say(txt,{interrupt:false,ifQuiet:true,rate:1.05})?t+500+txt.split(' ').length*380:null;
+  const st=sess.coach,txt=(st.stage===2?CUES2:CUES)[f];
+  st.cueHeard=Infinity; // being said: reps that start now don't count against them
+  speak(txt,{lvl:LV.CUE,rate:1.05,expire:2500,onend:spoken=>{if(sess&&sess.coach===st)st.cueHeard=spoken?performance.now():null}});
+  logE('cue',{f,stage:st.stage});
 }
 function onRep(r){
-  if(!sess||!sess.active||sess.paused)return;const c=sess.cur,now=performance.now();c.reps++;sess.lastRepT=now;
+  if(!sess||sess.state!=='working')return;const c=sess.cur,now=performance.now();c.reps++;sess.lastRepT=now;
   const settle=c.reps===1; // first swing out of the hike: counted, never coached
   if(!r.faults.length)c.good++;else if(!settle)for(const f of r.faults)c.faults[f]=(c.faults[f]||0)+1;
   c.reps_detail.push({n:c.reps,faults:r.faults,...(settle?{settle_rep:true}:{}),...r.m});
   $('sReps').textContent=c.reps;
   const a=settle?{action:'count'}:coachRep(sess.coach,r,now);
+  logE('rep',{n:c.reps,faults:r.faults,a:a.action});
   const shown=sess.coach.focus&&r.faults.includes(sess.coach.focus)?sess.coach.focus:r.faults[0];
-  const v=$('sVerdict');v.className='verdict '+(r.faults.length&&!settle?'bad':'ok');
-  v.textContent=settle?'Settling in':a.action==='praise'?'Better':r.faults.length?'Fix: '+(sess.coach.stage===2&&shown===sess.coach.focus?CUES2:CUES)[shown]:'Clean rep';
-  if(c.reps>=c.target){say(`${c.reps}. Park it.`);endSet();return}
+  chip(settle?'Settling in':a.action==='praise'?'Better':r.faults.length?'Fix: '+(sess.coach.stage===2&&shown===sess.coach.focus?CUES2:CUES)[shown]:'Clean rep',
+    r.faults.length&&!settle?'bad':'ok');
+  if(c.reps>=c.target){speak(`${c.reps}. Park it.`,{lvl:LV.CONTROL});go('review');return}
   if(a.action==='cue')speakCue(a.f);
-  else if(a.action==='praise')say("Better. That's it.",{interrupt:false,ifQuiet:true});
-  else if(a.action==='pause')pauseSet(a.f);
-  else if(!r.faults.length)say(String(c.reps),{interrupt:false,ifQuiet:true,rate:1.15});
+  else if(a.action==='praise')speak("Better. That's it.",{lvl:LV.PRAISE});
+  else if(a.action==='pause')go('paused',{r:'fault',f:a.f});
+  else if(!r.faults.length)speak(String(c.reps),{lvl:LV.COUNT,rate:1.15});
 }
-// Pause instead of ending: the athlete parks the bell, Ren explains the fix, then they resume the same set.
-function pauseSet(f){
-  const c=sess.cur;sess.paused=f;c.pauses++;(c.pause_faults=c.pause_faults||[]).push(FULL[f]);
-  say('Pause there. Park the bell.');
-  const v=$('sVerdict');v.className='verdict bad';v.textContent='Paused: '+CUES[f];
-  $('sCap').textContent=FIX[f];
-  $('sMain').textContent='Resume set';$('sMain').disabled=false;$('sAlt').hidden=false;
-  ask('pause',{...baseCtx(),paused_for:FULL[f],set_so_far:{exercise:EXN[c.ex],set:c.set,target:c.target,reps:c.reps,clean_reps:c.good,last_reps:c.reps_detail.slice(-4)}})
-    .then(r=>{if(sess&&sess.paused===f&&!sess.resuming&&r.say){$('sCap').textContent=r.say;say(r.say,{interrupt:false})}})
-    .catch(()=>{if(sess&&sess.paused===f&&!sess.resuming)say(FIX[f],{interrupt:false})});
+// Warm-up swings: cued, never paused or scored. They pick today's first focus.
+function warmRep(r){
+  const wu=sess&&sess.wu;if(!wu||sess.state!=='warmup')return;wu.n++;wu.lastRep=performance.now();$('sReps').textContent=wu.n;
+  if(wu.n>1)for(const f of r.faults)wu.faults[f]=(wu.faults[f]||0)+1;
+  if(wu.n>1&&r.faults.length){chip('Fix: '+CUES[r.faults[0]],'bad');speak(CUES[r.faults[0]],{lvl:LV.CUE,expire:1500})}
+  else{chip(wu.n>1?'Clean rep':'Settling in','ok');speak(String(wu.n),{lvl:LV.COUNT})}
+  if(wu.n>=5){wu.live=false;
+    const top=Object.entries(wu.faults).sort((a,b)=>b[1]-a[1])[0];
+    sess.nextFocus=top&&top[1]>=2?top[0]:null;
+    sess.wuFaults=Object.keys(wu.faults).length?Object.fromEntries(Object.entries(wu.faults).map(([k,n])=>[FULL[k],n])):null;
+    speak('Park it.',{lvl:LV.CONTROL});go('brief')}
 }
-function resumeSet(){
-  const f=sess.paused;sess.resuming=true;$('sAlt').hidden=true;$('sMain').disabled=true; // still paused until "Go"
-  speechSynthesis?.cancel?.();
-  sess.an=newAnalyser();
-  // They just had the full explanation: next bad rep gets the second cue, then another pause if needed.
-  sess.coach={focus:f,stage:1,cueHeard:performance.now()};
-  $('sCap').textContent='Focus: '+CUES[f];
-  countdown('Hike and swing',()=>{sess.paused=false;sess.resuming=false;sess.lastRepT=performance.now();$('sMain').disabled=false;$('sMain').textContent='Set done';$('sVerdict').className='verdict ok';$('sVerdict').textContent='Tracking you'});
+function resume(){
+  const p=sess.pause;sess.pause=null;hush();
+  if(p&&p.r==='fault')sess.coach={focus:p.f,stage:1,cueHeard:performance.now()}; // next bad rep gets the second cue
+  cap(p&&p.r==='fault'?'Focus: '+CUES[p.f]:'');go('countdown',{resume:true});
 }
-async function endSet(){
-  if(!sess.active)return;sess.active=false;const c=sess.cur,pausedFor=sess.paused;sess.paused=false;sess.resuming=false;sess.log.push(c);
-  $('sAlt').hidden=true;
-  if(pausedFor)c.stopped_early='ended after a pause for '+FULL[pausedFor];
-  const it=item();const last=sess.set>=it.sets;const nextItem=last?sess.items[sess.i+1]:it;
-  // The fault to focus on next set: the most frequent one this set (same exercise only).
-  const top=Object.entries(c.faults).sort((a,b)=>b[1]-a[1])[0];
-  sess.nextFocus=!last&&top?top[0]:null;
-  $('sMain').disabled=true;$('sMain').textContent='Ren is watching the replay…';
-  const summary={exercise:EXN[c.ex],set:c.set,of:it.sets,target:c.target,reps:c.reps,clean_reps:c.good,
-    faults:Object.fromEntries(Object.entries(c.faults).map(([k,n])=>[FULL[k],n])),rep_angles:c.reps_detail,
-    paused_mid_set:c.pauses?{times:c.pauses,for:c.pause_faults}:false,stopped_early:c.stopped_early||false,bell_kg:S.profile.kg,
-    focus_next_set:sess.nextFocus?CUES[sess.nextFocus]:null,
-    next:nextItem?(last?`next exercise: ${EXN[nextItem.ex]} ${nextItem.sets}x${nextItem.reps}`:`set ${sess.set+1} of ${it.sets}`):'that was the last set',rest_seconds:it.rest};
-  let line=`${c.good} clean out of ${c.reps}.`;
-  try{const r=await ask('set',{...baseCtx(),set_result:summary});if(r.say)line=r.say}catch(e){}
-  if(last){sess.i++;sess.set=1}else sess.set++;
-  $('sCap').textContent=line;
-  if(sess.i>=sess.items.length){say(line);$('sMain').textContent='Finish session';$('sMain').disabled=false;sess.done=true;return}
-  // Rest starts once Ren has finished talking, so his feedback doesn't eat the rest.
-  sess.resting=true;$('sMain').disabled=false;$('sMain').textContent='Rest · tap to skip';
-  say(line,{onend:()=>{if(!sess||!sess.resting)return;
-    let left=it.rest;const upd=()=>{$('sMain').innerHTML=`<span class="rest">Rest ${left}s</span> · tap to skip`};upd();
-    clearInterval(sess.restT);sess.restT=setInterval(()=>{left--;
-      if(left===10)say('Ten seconds.',{interrupt:false});
-      if(left<=0){clearInterval(sess.restT);sess.resting=false;prepSet();
-        say(sess.nextFocus?`Rest's up. Focus this set: ${CUES[sess.nextFocus]}. Start when you're set.`:`Rest's up. Start when you're set.`,{interrupt:false})}
-      else upd()},1000)}});
+function painStop(text){
+  if(!sess||['setup','cooldown','pain'].includes(sess.state))return;
+  hush();speak('Stop. Put the bell down.',{lvl:LV.SAFETY});
+  const c=sess.cur;
+  if(c&&!c.logged&&['working','paused','countdown'].includes(sess.state)&&c.reps>0){c.pain=true;c.stopped_early='stopped: athlete reported pain';c.logged=true;sess.log.push(c)}
+  addMsg('me',text);logE('pain',{text});go('pain');
+}
+
+const ENTER={
+  setup(){
+    hud('Set-up','Getting you in frame','','');mainBtn('Waiting to see you…',true);altBtn(null);chip('Get in frame');
+    cap('Prop the phone side-on, two to three metres away, whole body in view.');
+    speak("Prop the phone side-on, two to three metres away, whole body in view. I'll tell you when I can see you.",{lvl:LV.TALK});
+    sess.hintAt=performance.now();
+  },
+  warmup(){
+    sess.wu={step:'hinge',n:0,live:false,down:false,lastRep:performance.now(),nagged:false,faults:{},an:null};
+    hud('Warm-up','Hip hinges, no bell','0','of 5');mainBtn('Skip warm-up');altBtn(null);chip('Warm-up','ok');
+    cap('Five slow hip hinges, no bell. Push your hips back like closing a car door, then stand tall.');
+    speak('Quick warm-up. Five slow hip hinges, no bell. Push your hips back like closing a car door, then stand tall.',
+      {lvl:LV.TALK,onend:ifState('warmup',()=>{sess.wu.live=true;sess.wu.lastRep=performance.now()})});
+  },
+  brief(){
+    const it=item(),n=sess.set,f=sess.nextFocus,next=ifState('brief',()=>go('ready'));
+    hud(EXN[it.ex],`Set ${n} of ${it.sets} · ${S.profile.kg} kg`,'0',`of ${it.reps}`);
+    mainBtn(`Start set ${n}`);altBtn(null);chip(f?'Focus: '+CUES[f]:'Get set','ok');
+    const def=it.ex==='swing'?'snap the hips, stand tall':'sit deep, chest up';
+    if(n===1){
+      const setupLine=it.ex==='goblet'?' Hold the bell at your chest. Same spot, side-on.':'';
+      const fb=`${EXN[it.ex]}: ${it.sets} sets of ${it.reps}.${setupLine} Focus: ${f?CUES[f].toLowerCase():def}.`;
+      cap(fb);
+      aiLine('brief',{exercise:EXN[it.ex],sets:it.sets,reps:it.reps,bell_kg:S.profile.kg,focus:f?CUES[f]:def,
+        warmup_faults:sess.wuFaults||null,first_exercise_today:sess.i===0},fb,{onend:next});
+    }else{const line=`Set ${n}. ${f?'Focus: '+CUES[f]+'.':'Same again.'}`;cap(line);speak(line,{lvl:LV.TALK,onend:next})}
+  },
+  ready(){sess.hold=false;sess.counting=false;sess.readyNag=false;mainBtn(`Start set ${sess.set}`);altBtn(null)},
+  countdown(arg){
+    mainBtn('…',true);altBtn(null);const c=$('sCount');let n=3;c.classList.add('on');c.textContent=n;speak('Three',{lvl:LV.CONTROL});
+    const goWord=item().ex==='swing'?'Hike and swing':'Go';
+    sess.tick=setInterval(()=>{n--;
+      if(n>0){c.textContent=n;speak(n===2?'Two':'One',{lvl:LV.CONTROL})}
+      else{clearInterval(sess.tick);sess.tick=null;c.textContent='Go';speak(goWord,{lvl:LV.CONTROL});setTimeout(()=>c.classList.remove('on'),600);go('working',arg)}},1000);
+  },
+  working(arg){
+    if(!arg||!arg.resume){
+      const it=item();sess.cur={ex:it.ex,set:sess.set,target:it.reps,reps:0,good:0,faults:{},reps_detail:[],pauses:0,pauseCount:{},stopped_early:false};
+      const pf=sess.nextFocus;sess.coach={focus:pf||null,stage:pf?1:0,cueHeard:pf?performance.now():null};
+      $('sReps').textContent='0';
+    }
+    sess.an=newAnalyser();sess.lastRepT=performance.now();sess.lostAt=0;sess.nobodyAt=0;sess.lostSaid=false;sess.anReset=false;sess.nudged=false;sess.fromRest=false;
+    mainBtn('Set done');altBtn(null);chip('Tracking you','ok');
+  },
+  // p: {r:'fault',f} | {r:'manual'} | {r:'lost'} | {r:'nobody'}
+  paused(p){
+    const c=sess.cur;sess.pause=p;sess.hold=false;sess.autoResume=true;sess.resumeArmed=false;
+    mainBtn('Resume set');altBtn('End this set');logE('pause',p);
+    if(p.r==='fault'){
+      const f=p.f;c.pauses++;c.pauseCount[f]=(c.pauseCount[f]||0)+1;(c.pause_faults=c.pause_faults||[]).push(FULL[f]);
+      const nth=c.pauseCount[f];chip('Paused: '+CUES[f],'bad');cap(FIX[f]);
+      speak('Pause there. Park the bell.',{lvl:LV.CONTROL});
+      const ctxp={paused_for:FULL[f],pause_number:nth,set_so_far:{exercise:EXN[c.ex],set:c.set,target:c.target,reps:c.reps,clean_reps:c.good,last_reps:c.reps_detail.slice(-4)}};
+      if(nth>=2){sess.autoResume=false; // second time: offer to end the set, don't push on
+        aiLine('pause',ctxp,`That's twice on ${CUES[f].toLowerCase()}. Let's end this set here and drill it. Say end set, or go to try once more.`);
+      }else aiLine('pause',ctxp,FIX[f]+" Get back in position when you're ready.");
+    }else if(p.r==='manual'){chip('Paused');cap("Paused. Get back in position when you're ready, or say go.");speak("Paused. Get back in position when you're ready.",{lvl:LV.CONTROL})}
+    else if(p.r==='lost'){chip('Paused: lost you');cap("I've lost you. Step back into view and I'll pick it up.");speak("I've lost you. Paused until you're back in view.",{lvl:LV.CONTROL})}
+    else{chip("Paused: can't see you",'bad');cap("I can't see you. Check the phone is still pointing at you.");speak("I can't see you. Check the phone.",{lvl:LV.CONTROL})}
+  },
+  review(){
+    const c=sess.cur,p=sess.pause;sess.pause=null;altBtn(null);
+    if(p&&p.r==='fault')c.stopped_early='ended after a pause for '+FULL[p.f];
+    if(!c.logged){c.logged=true;sess.log.push(c)}
+    const it=item(),last=sess.set>=it.sets,nextItem=last?sess.items[sess.i+1]:it;
+    const top=Object.entries(c.faults).sort((a,b)=>b[1]-a[1])[0];
+    sess.nextFocus=!last&&top?top[0]:null;
+    mainBtn('Ren is watching the replay…',true);chip(`${c.good} clean of ${c.reps}`,c.reps&&c.good===c.reps?'ok':'');
+    const summary={exercise:EXN[c.ex],set:c.set,of:it.sets,target:c.target,reps:c.reps,clean_reps:c.good,
+      faults:Object.fromEntries(Object.entries(c.faults).map(([k,n])=>[FULL[k],n])),rep_angles:c.reps_detail,
+      paused_mid_set:c.pauses?{times:c.pauses,for:c.pause_faults}:false,stopped_early:c.stopped_early||false,bell_kg:S.profile.kg,
+      focus_next_set:sess.nextFocus?CUES[sess.nextFocus]:null,
+      next:nextItem?(last?`next exercise: ${EXN[nextItem.ex]} ${nextItem.sets}x${nextItem.reps}`:`set ${sess.set+1} of ${it.sets}`):'that was the last set',rest_seconds:it.rest};
+    sess.restSecs=it.rest;
+    if(last){sess.i++;sess.set=1}else sess.set++;
+    const done=sess.i>=sess.items.length;
+    const fb=`${c.good} clean of ${c.reps}.`+(sess.nextFocus?` Next set, focus: ${CUES[sess.nextFocus].toLowerCase()}.`:done?'':' Rest a minute.');
+    aiLine('set',{set_result:summary},fb,{limit:4000,onend:ifState('review',()=>go(done?'cooldown':'rest'))});
+  },
+  rest(){
+    let left=sess.restSecs;sess.fromRest=true;chip('Resting','ok');
+    const upd=()=>mainBtn(`Rest ${left}s · skip`);upd();
+    sess.tick=setInterval(()=>{left--;
+      if(left===10)speak('Ten seconds.',{lvl:LV.TALK});
+      if(left<=0){clearInterval(sess.tick);sess.tick=null;speak("Rest's up.",{lvl:LV.CONTROL});go('brief')}else upd()},1000);
+  },
+  pain(){
+    sess.autoResume=false;const more=sess.i+1<sess.items.length;
+    chip('Stopped: pain','bad');mainBtn(more?'Next exercise':'End session');altBtn(more?'End session':null);
+    aiLine('chat',{during_session:true,pain_reported:true,chat:S.chat.slice(-4).map(m=>({from:m.who==='me'?'athlete':'coach',text:m.text}))},
+      "What did you feel? If it's sharp pain rather than effort, we stop this exercise today and you get it checked by a physio.",{limit:4000});
+  },
+  cooldown(){mainBtn('Finishing…',true);altBtn(null);chip('Done','ok');speak("That's the session. Park the bell.",{lvl:LV.CONTROL,onend:()=>{if(sess)finishSession()}})},
+};
+
+const FRAME={
+  setup({L,J,t,still}){
+    const hint=frameHint(L,J);chip(hint||'Got you',hint?'':'ok');
+    if(!hint&&still>=2000){speak('Got you.',{lvl:LV.CONTROL});go('warmup');return}
+    if(hint&&t-sess.hintAt>20000&&!vBusy()){sess.hintAt=t;speak(hint+'.',{lvl:LV.TALK})}
+  },
+  warmup({J,ok,t}){
+    const wu=sess.wu;
+    if(!wu.nagged&&wu.live&&t-wu.lastRep>25000&&!vBusy()){wu.nagged=true;
+      speak(wu.step==='hinge'?'Hips back, then stand tall. Five of those.':'Hike the bell back and swing it to chest height. Easy.',{lvl:LV.TALK})}
+    if(!wu.live||!ok)return;
+    if(wu.step==='hinge'){
+      const hip=ang(J.s,J.h,J.k);
+      if(!wu.down&&hip<140)wu.down=true;
+      else if(wu.down&&hip>162){wu.down=false;wu.n++;wu.lastRep=t;$('sReps').textContent=wu.n;
+        if(wu.n<5){speak(String(wu.n),{lvl:LV.COUNT});return}
+        wu.live=false;wu.step='light';wu.n=0;hud('Warm-up','Light swings','0','of 5');
+        cap('Now pick up the bell. Five light swings, easy pace.');
+        speak('Good. Now pick up the bell. Five light swings, easy pace.',{lvl:LV.TALK,onend:ifState('warmup',()=>{wu.live=true;wu.lastRep=performance.now();wu.an=makeSwing(warmRep)})});
+      }
+    }else if(wu.an)wu.an.frame(J,t);
+  },
+  ready({L,J,ok,t,still}){
+    const inPos=ok&&sideOn(L,J);
+    if(!inPos)sess.hold=false; // stepping away re-arms the hands-free start
+    chip(inPos?(sess.hold?'Holding · say go':'Stand still to start'):(frameHint(L,J)||'Get in position'),inPos?'ok':'');
+    // A beat after Ren finishes, then count in.
+    if(inPos&&!sess.hold&&!sess.counting&&still>=2000&&t-sess.enteredAt>1500&&!vBusy()){sess.counting=true;speak('Counting you in.',{lvl:LV.CONTROL,onend:ifState('ready',()=>go('countdown'))})}
+    if(sess.fromRest&&!sess.readyNag&&t-sess.enteredAt>30000&&!vBusy()){sess.readyNag=true;speak("Whenever you're ready.",{lvl:LV.TALK})}
+  },
+  working({J,ok,t,still}){
+    if(!ok)return null;
+    const live=sess.an.frame(J,t),c=sess.cur;
+    if(sess.state!=='working')return live; // a rep just ended the set or paused it
+    if(c.reps>0&&t-sess.lastRepT>8000&&still>=3000){speak("Set's done.",{lvl:LV.CONTROL});go('review');return live}
+    if(c.reps===0&&!sess.nudged&&t-sess.lastRepT>20000&&!vBusy()){sess.nudged=true;
+      speak(item().ex==='swing'?"Whenever you're ready, start swinging.":"Whenever you're ready, start your squats.",{lvl:LV.TALK})}
+    return live;
+  },
+  paused({L,J,ok,t,still}){
+    if(!sess.autoResume||sess.hold||sess.resumeArmed)return;
+    // They must have moved since the pause (parked the bell, did the drill), then settled back in position.
+    if(sess.movedAt<sess.enteredAt+1000)return;
+    if(t-sess.enteredAt>4000&&ok&&sideOn(L,J)&&still>=2000&&!vBusy()){
+      sess.resumeArmed=true;speak('Ready when you are.',{lvl:LV.CONTROL,onend:ifState('paused',resume)})}
+  },
+};
+// During a set: what happens when the camera loses you.
+function lostCheck(L,ok,t){
+  if(ok){if(sess.lostAt)chip('Tracking you','ok');sess.lostAt=0;sess.lostSaid=false;sess.nobodyAt=0;sess.anReset=false;return}
+  if(!sess.lostAt){sess.lostAt=t;chip('Show your whole side')}
+  if(!L){if(!sess.nobodyAt)sess.nobodyAt=t}else sess.nobodyAt=0;
+  if(t-sess.lostAt>600&&!sess.anReset){sess.an=newAnalyser();sess.anReset=true} // half-seen reps don't count
+  if(t-sess.lostAt>2000&&!sess.lostSaid){sess.lostSaid=true;speak("I've lost you, step back into view.",{lvl:LV.CUE,expire:2000})}
+  if(sess.nobodyAt&&t-sess.nobodyAt>5000){go('paused',{r:'nobody'});return}
+  if(t-sess.lostAt>10000)go('paused',{r:'lost'});
+}
+
+/* ----- voice commands (FLOW.md section 7), where the browser supports speech input ----- */
+const CMD=[['pain',/\b(ouch|ow+|pain|painful|hurts?|hurting|injured|tweaked)\b/],['endsession',/\bend (the )?session\b/],
+  ['endset',/\b(end (the )?set|stop|i'?m done|finished)\b/],['pause',/\bpause\b/],['wait',/\b(wait|hold on|hang on|not yet)\b/],
+  ['skip',/\bskip\b/],['repeat',/\b(repeat|say (that|it) again|come again)\b/],['go',/\b(go|ready|start|resume|let'?s go)\b/]];
+const voiceCmd=text=>{const tx=String(text).toLowerCase();const hit=CMD.find(([,re])=>re.test(tx));return hit?hit[0]:null};
+function onVoice(text){
+  if(!sess)return;const c=voiceCmd(text);if(!c)return;const st=sess.state;logE('voice',{c,text});
+  if(c==='pain')return painStop(text);
+  if(c==='endsession')return finishSession();
+  if(c==='endset'){if(st==='working'||st==='paused'){hush();speak("Set's done.",{lvl:LV.CONTROL});go('review')}return}
+  if(c==='pause'){if(st==='working')go('paused',{r:'manual'});return}
+  if(c==='wait'){
+    if(st==='countdown'){hush();$('sCount').classList.remove('on');go('ready');sess.hold=true;speak('Holding. Say go when you are ready.',{lvl:LV.CONTROL})}
+    else if(st==='ready'||st==='paused'||st==='brief'){hush();if(st==='brief')go('ready');sess.hold=true;speak('Holding. Say go when you are ready.',{lvl:LV.CONTROL})}
+    return}
+  if(c==='skip'){if(st==='rest'||st==='warmup'){hush();go('brief')}return}
+  if(c==='repeat'){if(V.lastLine)speak(V.lastLine,{lvl:LV.TALK});return}
+  if(c==='go'){
+    if(st==='ready'||st==='brief'){hush();go('countdown')}
+    else if(st==='paused')resume();
+    else if(st==='rest'){hush();go('brief')}
+  }
+}
+const VL={rec:null,want:false};
+function listenStart(){if(!SR||VL.want)return;VL.want=true;$('sMicOn').hidden=false;listenLoop()}
+function listenLoop(){
+  if(!VL.want||VL.rec)return;
+  const r=new SR();r.lang='en-GB';r.continuous=true;r.interimResults=false;VL.rec=r;
+  r.onresult=ev=>{for(let i=ev.resultIndex;i<ev.results.length;i++){
+    if(!ev.results[i].isFinal)continue;
+    if(vBusy()||performance.now()-V.quietAt<1800)continue; // that was probably Ren's own voice
+    onVoice(ev.results[i][0].transcript)}};
+  r.onerror=e=>{if(e.error==='not-allowed'||e.error==='service-not-allowed'){VL.want=false;$('sMicOn').hidden=true}};
+  r.onend=()=>{VL.rec=null;if(VL.want)setTimeout(listenLoop,300)};
+  try{r.start()}catch(e){VL.rec=null}
+}
+function listenStop(){VL.want=false;$('sMicOn').hidden=true;try{VL.rec&&VL.rec.abort()}catch(e){}VL.rec=null}
+
+const newSess=()=>({items:S.plan||DEFAULT_PLAN,i:0,set:1,state:null,token:0,log:[],events:[],cur:null,coach:{focus:null,stage:0,cueHeard:null},nextFocus:null,
+  mv:[],movedAt:performance.now(),okFrames:0,t0:Date.now()});
+async function startSession(){
+  speak(' ',{lvl:LV.CONTROL}); // unlocks speech on iPhone (needs a tap)
+  S.plan=S.plan||DEFAULT_PLAN;
+  sess=newSess();
+  show('session');$('sLoad').hidden=false;$('sLoad').textContent='Starting camera and pose model…';mainBtn('Starting…',true);altBtn(null);
+  try{await Promise.all([initPose(),startCam()])}
+  catch(e){$('sLoad').textContent='Camera or model failed: '+e.message+'. This needs https and camera permission.';return}
+  $('sLoad').hidden=true;running=true;keepAwake();listenStart();loop();go('setup');
+}
+$('sFlip').addEventListener('click',async()=>{facing=facing==='user'?'environment':'user';try{await startCam()}catch(e){}});
+async function loop(){
+  if(!running)return;
+  if(poseReady&&vid.readyState>=2){try{await pose.send({image:vid})}catch(e){}}
+  requestAnimationFrame(loop);
 }
 $('sMain').addEventListener('click',()=>{
-  if(!sess)return;
-  if(sess.done)return finishSession();
-  if(sess.paused&&!sess.resuming)return resumeSet();
-  if(sess.active)return endSet();
-  if(sess.resting){clearInterval(sess.restT);sess.resting=false;speechSynthesis?.cancel?.();prepSet();return} // skip rest -> back to "Start set"
-  startSet();
+  if(!sess)return;const st=sess.state;
+  if(st==='warmup'||st==='rest'){hush();go('brief')}
+  else if(st==='brief'||st==='ready'){hush();go('countdown')}
+  else if(st==='working')go('review');
+  else if(st==='paused')resume();
+  else if(st==='pain'){if(sess.i+1<sess.items.length){sess.i++;sess.set=1;sess.nextFocus=null;hush();go('brief')}else finishSession()}
 });
-$('sAlt').addEventListener('click',()=>{if(sess&&sess.paused&&!sess.resuming)endSet()});
-$('sEnd').addEventListener('click',()=>{if(sess&&sess.active){sess.active=false;sess.log.push(sess.cur)}finishSession()});
-hookMic($('sMic'),async t=>{addMsg('me',t);$('sCap').textContent='…';try{const r=await ask('chat',{...baseCtx(),during_session:true,chat:S.chat.slice(-8).map(m=>({from:m.who==='me'?'athlete':'coach',text:m.text}))});if(r.say){addMsg('ren',r.say);$('sCap').textContent=r.say;say(r.say)}}catch(e){}});
+$('sAlt').addEventListener('click',()=>{if(!sess)return;if(sess.state==='paused'){hush();go('review')}else if(sess.state==='pain')finishSession()});
+$('sEnd').addEventListener('click',()=>finishSession());
+hookMic($('sMic'),async t=>{
+  if(!sess)return;if(voiceCmd(t)==='pain')return painStop(t);
+  addMsg('me',t);cap('…');
+  try{const r=await ask('chat',{...baseCtx(),during_session:true,chat:S.chat.slice(-8).map(m=>({from:m.who==='me'?'athlete':'coach',text:m.text}))});
+    if(r.say&&sess){addMsg('ren',r.say);cap(r.say);speak(r.say,{lvl:LV.TALK})}}catch(e){$('sOff').hidden=false}
+},{before:()=>{if(sess)listenStop()},after:()=>{if(sess)listenStart()}});
 async function finishSession(){
-  running=false;clearInterval(sess?.restT);if(stream)stream.getTracks().forEach(t=>t.stop());stream=null;
-  const log=sess?sess.log:[],t0=sess?sess.t0:Date.now();sess=null;goHome();
+  if(!sess||sess.ending)return;sess.ending=true;
+  const s=sess;clearInterval(s.tick);running=false;hush();listenStop();$('sCount').classList.remove('on');
+  try{wake&&wake.release()}catch(e){}wake=null;
+  if(stream)stream.getTracks().forEach(t=>t.stop());stream=null;
+  if(s.cur&&!s.cur.logged&&s.cur.reps>0&&['working','paused','countdown'].includes(s.state)){s.cur.logged=true;s.cur.stopped_early=s.cur.stopped_early||'session ended mid-set';s.log.push(s.cur)}
+  logE('end');S.logs=(S.logs||[]).concat([{date:new Date().toISOString(),events:s.events}]).slice(-3);
+  const log=s.log,t0=s.t0;sess=null;save();goHome();
   if(!log.length){addMsg('sys','Session ended before any sets.');return}
   const tot=log.reduce((a,c)=>(a.reps+=c.reps,a.good+=c.good,a),{reps:0,good:0});
-  const summary=log.map(c=>`${EXN[c.ex]} set ${c.set}: ${c.good}/${c.reps} clean${Object.keys(c.faults).length?', faults: '+Object.entries(c.faults).map(([k,n])=>FULL[k]+' x'+n).join(', '):''}${c.stopped_early?' (stopped early)':''}`).join('; ');
-  const r=await trainer('debrief',{session_sets:summary,minutes:Math.round((Date.now()-t0)/6e4)});
+  const summary=log.map(c=>`${EXN[c.ex]} set ${c.set}: ${c.good}/${c.reps} clean${Object.keys(c.faults).length?', faults: '+Object.entries(c.faults).map(([k,n])=>FULL[k]+' x'+n).join(', '):''}${c.pauses?`, paused ${c.pauses}x`:''}${c.pain?' (stopped: pain)':c.stopped_early?' ('+c.stopped_early+')':''}`).join('; ');
+  const r=await trainer('debrief',{session_sets:summary,minutes:Math.round((Date.now()-t0)/6e4),clean_rate_recent:S.history.slice(-2).map(h=>h.summary.split('.')[0])});
   if(r&&typeof r.notes==='string')S.notes=r.notes.slice(0,800);
   S.history.push({t:Date.now(),date:new Date().toISOString().slice(0,10),summary:`${tot.good}/${tot.reps} clean reps. ${summary}`.slice(0,600)});
   S.history=S.history.slice(-30);S.plan=null;save();renderPlan();goHome();
 }
 
-/* ---------- per-frame: draw + analyse ---------- */
+/* ---------- per-frame: draw, then hand the frame to the current state ---------- */
 const BONES=[['s','e'],['e','w'],['s','h'],['h','k'],['k','a']];
 function onResults(res){
   const L=res.poseLandmarks,mirror=facing==='user',t=performance.now();
   ctx.save();if(mirror){ctx.translate(W,0);ctx.scale(-1,1)}ctx.drawImage(res.image,0,0,W,H);ctx.restore();
+  if(!sess||!sess.state)return;
+  const J=L?joints(L):null,raw=!!J&&bodyOK(J);
+  // Stillness: has the hip or shoulder moved more than 5% of body height in the last second?
+  if(raw){const bh=J.a.y-J.s.y,b=sess.mv;b.push({t,hx:J.h.x,hy:J.h.y,sx:J.s.x,sy:J.s.y});while(b.length&&t-b[0].t>1000)b.shift();
+    const d=Math.max(...b.map(p=>Math.max(Math.abs(p.hx-J.h.x),Math.abs(p.hy-J.h.y),Math.abs(p.sx-J.s.x),Math.abs(p.sy-J.s.y))));
+    if(d>.05*bh)sess.movedAt=t}
+  else{sess.mv=[];sess.movedAt=t}
+  sess.okFrames=raw?sess.okFrames+1:0;
+  const ok=raw&&sess.okFrames>=6,still=t-sess.movedAt; // ok = steady, whole-body view
+  if(sess.state==='working')lostCheck(L,raw,t);
+  const fn=sess&&FRAME[sess.state];const live=fn?fn({L,J,ok,raw,t,still}):null;
   if(!sess)return;
-  const J=L?joints(L):null,ok=!!J&&bodyOK(J);
-  if(!ok){
-    // Not scoring anything while the whole body isn't in the picture.
-    sess.okFrames=0;if(!sess.badSince)sess.badSince=t;
-    if(sess.active&&t-sess.badSince>600&&!sess.anReset){sess.an=newAnalyser();sess.anReset=true} // drop half-seen reps
-    if(sess.paused)return; // parked and listening: leave the pause message on screen
-    $('sVerdict').className='verdict';$('sVerdict').textContent=L?'Show your whole side':'Get in frame';
-    if(sess.active&&t-sess.badSince>2000&&t-sess.lastCue>6000){sess.lastCue=t;say('Step back. I need to see all of you, side-on.',{interrupt:false,ifQuiet:true})}
-    return}
-  sess.badSince=0;sess.anReset=false;sess.okFrames=(sess.okFrames||0)+1;
-  if(sess.okFrames<6)return; // wait for a steady view before scoring
-  sess.lastSeen=t;
-  const vt=$('sVerdict').textContent;
-  if(!sess.paused&&(vt==='Show your whole side'||vt==='Get in frame'||(!sess.active&&!sess.resting&&vt!=='Ready'))){$('sVerdict').className='verdict ok';$('sVerdict').textContent=sess.active?'Tracking you':'Ready'}
-  let live=null;if(sess.active&&!sess.paused&&sess.an)live=sess.an.frame(J,t);
-  // Bell parked for 20 s mid-set (not paused): treat the set as done.
-  if(sess.active&&!sess.paused&&sess.cur.reps>0&&t-sess.lastRepT>20000){sess.cur.stopped_early=false;endSet()}
+  if(sess.state==='setup'||sess.state==='ready'){ // framing guide: where the body should be
+    ctx.save();ctx.setLineDash([W/60,W/80]);ctx.strokeStyle='#ffffff70';ctx.lineWidth=Math.max(3,W/300);
+    const gw=Math.min(W*.5,H*.45);ctx.strokeRect((W-gw)/2,H*.05,gw,H*.9);ctx.restore()}
+  if(!J||!raw)return;
   // skeleton
-  const X=p=>mirror?W-p.x:p.x,lw=Math.max(5,W/120),last=sess.cur?.reps_detail?.at(-1),bad=new Set(last&&sess.active?last.faults:[]);
+  const X=p=>mirror?W-p.x:p.x,lw=Math.max(5,W/120),last=sess.state==='working'?sess.cur?.reps_detail?.at(-1):null,bad=new Set(last?last.faults:[]);
   const badJ={squat:['k'],lockout:['h'],leanback:['s','h'],arms:['e'],low:['w'],depth:['k'],chest:['s','h'],far:['w']};
   const hot=new Set([...bad].flatMap(f=>badJ[f]||[]));
   ctx.lineCap='round';ctx.lineWidth=lw;
   for(const[a,b]of BONES){ctx.strokeStyle=hot.has(a)||hot.has(b)?'#ff4b3e':'#ffffffd0';ctx.beginPath();ctx.moveTo(X(J[a]),J[a].y);ctx.lineTo(X(J[b]),J[b].y);ctx.stroke()}
-  for(const j of['s','e','w','h','k','a']){ctx.fillStyle=hot.has(j)?'#ff4b3e':getComputedStyle(document.documentElement).getPropertyValue('--bell');ctx.beginPath();ctx.arc(X(J[j]),J[j].y,lw*1.1,0,7);ctx.fill()}
+  const bell=getComputedStyle(document.documentElement).getPropertyValue('--bell');
+  for(const j of['s','e','w','h','k','a']){ctx.fillStyle=hot.has(j)?'#ff4b3e':bell;ctx.beginPath();ctx.arc(X(J[j]),J[j].y,lw*1.1,0,7);ctx.fill()}
   if(live){const fs=Math.max(22,W/22);ctx.font=`700 ${fs}px "Archivo Narrow",sans-serif`;ctx.textBaseline='middle';
     const tag=(j,txt)=>{const x=X(J[j])+fs*.8,y=J[j].y-fs*.6,w=ctx.measureText(txt).width+fs*.6;ctx.fillStyle='#000b';ctx.beginPath();ctx.roundRect(x,y-fs*.65,w,fs*1.3,fs*.3);ctx.fill();ctx.fillStyle='#fff';ctx.fillText(txt,x+fs*.3,y)};
     if(live.hip!=null)tag('h',`${live.hip|0}°`);tag('k',`${live.knee|0}°`)}
@@ -545,7 +779,11 @@ function onResults(res){
 
 /* ---------- boot ---------- */
 if(S.profile){setBell(S.profile.kg);goHome()}else{setBell(16);show('gate')}
-window.__kb={makeSwing,makeGoblet,joints,bodyOK,coachRep,setWH:(w,h)=>{W=w;H=h}};
+window.__kb={makeSwing,makeGoblet,joints,bodyOK,coachRep,voiceCmd,speak,LV,V,setWH:(w,h)=>{W=w;H=h}};
+// Development check only: drive a session with synthetic poses instead of the camera (captions-only voice).
+window.__kb.sim={start(){V.fast=true;S.mute=true;S.profile=S.profile||{name:'Test',kg:12,goal:'',level:'',notes:''};S.code=S.code||'x';
+    S.plan=null;sess=newSess();show('session');$('sLoad').hidden=true;go('setup')},
+  frame(L){onResults({poseLandmarks:L,image:cv})},get s(){return sess},main(){$('sMain').click()},alt(){$('sAlt').click()},voice(t){onVoice(t)}};
 }
 </script>
 </body>
