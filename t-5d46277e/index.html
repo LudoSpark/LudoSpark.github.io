@@ -56,7 +56,7 @@ label{display:grid;gap:6px;font-size:14px;color:var(--mute)}
 .actions{display:grid;gap:8px}
 /* session */
 #session{padding:0;position:relative;height:100%;min-height:100dvh;background:#000}
-#cv{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+#cv{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000}
 .hud{position:absolute;left:0;right:0;top:0;padding:max(12px,env(safe-area-inset-top)) 14px 40px;background:linear-gradient(#000c,#0000);display:flex;align-items:flex-start;gap:12px}
 .ex-name{font-size:26px;line-height:1}
 .setinfo{color:#ddd;font-size:14px}
@@ -332,7 +332,7 @@ async function initPose(){
 }
 async function startCam(){
   if(stream)stream.getTracks().forEach(t=>t.stop());
-  stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:facing,width:{ideal:720},height:{ideal:1280}},audio:false});
+  stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:facing,width:{ideal:1280},height:{ideal:720},resizeMode:'none'},audio:false});
   vid.srcObject=stream;await vid.play();W=vid.videoWidth;H=vid.videoHeight;cv.width=W;cv.height=H;
 }
 async function startSession(){
