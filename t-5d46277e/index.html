@@ -181,10 +181,13 @@ const loadVoices=()=>{voices=(speechSynthesis.getVoices()||[]).filter(v=>/^en/i.
   $('stVoice').innerHTML=voices.map(v=>`<option value="${esc(v.name)}"${v.name===S.voice?' selected':''}>${esc(v.name)} (${esc(v.lang)})</option>`).join('')||'<option>Default</option>';
   if(!S.voice){const pref=voices.find(v=>/Daniel|Arthur|Google UK English Male|Aaron|Samantha/.test(v.name))||voices[0];if(pref)S.voice=pref.name}};
 if('speechSynthesis' in window){loadVoices();speechSynthesis.onvoiceschanged=loadVoices}
-function say(text,{interrupt=true,rate=1.02}={}){
-  if(S.mute||!('speechSynthesis' in window)||!text)return;
+// Returns true if the line was spoken. ifQuiet: skip it (return false) while Ren is already talking.
+function say(text,{interrupt=true,rate=1.02,ifQuiet=false}={}){
+  if(S.mute||!('speechSynthesis' in window)||!text)return false;
+  if(ifQuiet&&(speechSynthesis.speaking||speechSynthesis.pending))return false;
   if(interrupt)speechSynthesis.cancel();
   const u=new SpeechSynthesisUtterance(text);const v=voices.find(v=>v.name===S.voice);if(v)u.voice=v;u.rate=rate;speechSynthesis.speak(u);
+  return true;
 }
 const speaking=()=>'speechSynthesis' in window&&speechSynthesis.speaking;
 
@@ -266,7 +269,11 @@ $('stReset').addEventListener('click',e=>{if(!resetArm){resetArm=true;e.target.t
 
 /* ---------- pose geometry ---------- */
 let W=720,H=1280;
-const P=(L,i)=>({x:L[i].x*W,y:L[i].y*H,v:L[i].visibility??1});
+const P=(L,i)=>({x:L[i].x*W,y:L[i].y*H,v:L[i].visibility??1,nx:L[i].x,ny:L[i].y});
+// The model guesses off-screen limbs, so a joint only counts if it is confident AND inside the picture.
+const inView=p=>p.v>.6&&p.nx>.01&&p.nx<.99&&p.ny>.01&&p.ny<.99;
+// Whole side in view: shoulder, hip, knee, ankle in the picture, arm tracked, and a standing body (not a face at a desk).
+const bodyOK=J=>['s','h','k','a'].every(j=>inView(J[j]))&&J.e.v>.5&&J.w.v>.5&&(J.a.y-J.s.y)>.3*H;
 const deg=r=>r*180/Math.PI;
 const ang=(a,b,c)=>{let d=Math.abs(deg(Math.atan2(a.y-b.y,a.x-b.x)-Math.atan2(c.y-b.y,c.x-b.x)));return d>180?360-d:d};
 const IDX={L:{s:11,e:13,w:15,h:23,k:25,a:27,heel:29,toe:31},R:{s:12,e:14,w:16,h:24,k:26,a:28,heel:30,toe:32}};
@@ -303,24 +310,24 @@ function makeSwing(onRep){
       if(top.lean<-12)f.push('leanback');
       if(top.elbow<140)f.push('arms');
       if(top.wy>top.mid+0.02*H)f.push('low');
-      onRep({faults:f,m:{bottom_hip:bot.minHip|0,bottom_knee:bot.knee|0,top_hip:top.maxHip|0}});armed=false;bot=null;top=null}
+      onRep({faults:f,t0:bot.t0,m:{bottom_hip:bot.minHip|0,bottom_knee:bot.knee|0,top_hip:top.maxHip|0}});armed=false;bot=null;top=null}
     return{hip,knee,lean}}}
 }
 function makeGoblet(onRep){
   let ph='up',rep=null;
   return{key:'knee',frame(J,t){
     const knee=ang(J.h,J.k,J.a),lean=Math.abs(torso(J)),tl=Math.hypot(J.s.x-J.h.x,J.s.y-J.h.y),far=Math.abs(J.w.x-J.s.x)/(tl||1);
-    if(ph==='up'&&knee<125){ph='down';rep={min:knee,lean:0,far:0}}
+    if(ph==='up'&&knee<125){ph='down';rep={min:knee,lean:0,far:0,t0:t}}
     if(ph==='down'){rep.min=Math.min(rep.min,knee);rep.lean=Math.max(rep.lean,lean);rep.far=Math.max(rep.far,far);
       if(knee>160){ph='up';const f=[];if(rep.min>100)f.push('depth');if(rep.lean>45)f.push('chest');if(rep.far>.6)f.push('far');
-        onRep({faults:f,m:{depth_knee:rep.min|0,max_lean:rep.lean|0}});rep=null}}
+        onRep({faults:f,t0:rep.t0,m:{depth_knee:rep.min|0,max_lean:rep.lean|0}});rep=null}}
     return{knee,lean}}}
 }
 
 /* ---------- session ---------- */
 const cv=$('cv'),ctx=cv.getContext('2d'),vid=document.createElement('video');vid.playsInline=true;vid.muted=true;
 let pose=null,poseReady=false,facing='user',stream=null,running=false;
-let sess=null; // {items, i, set, active, reps, an, log, consecutiveBad, lastRepT, restUntil}
+let sess=null; // {items, i, set, active, reps, an, log, streak, streakFault, cueHeard, lastRepT, restUntil}
 const BASE='';
 function loadScript(u){return new Promise((ok,no)=>{const s=document.createElement('script');s.src=u;s.onload=ok;s.onerror=no;document.head.appendChild(s)})}
 async function initPose(){
@@ -338,7 +345,7 @@ async function startCam(){
 async function startSession(){
   say(' ');
   S.plan=S.plan||DEFAULT_PLAN;
-  sess={items:S.plan,i:0,set:1,active:false,reps:0,good:0,an:null,log:[],cur:null,consecutiveBad:0,lastRepT:0,lastSeen:0,lastCue:0,t0:Date.now()};
+  sess={items:S.plan,i:0,set:1,active:false,reps:0,good:0,an:null,log:[],cur:null,streak:0,streakFault:null,cueHeard:{},okFrames:0,badSince:0,lastRepT:0,lastSeen:0,lastCue:0,t0:Date.now()};
   show('session');$('sLoad').hidden=false;$('sLoad').textContent='Starting camera and pose model…';
   try{await Promise.all([initPose(),startCam()])}
   catch(e){$('sLoad').textContent='Camera or model failed: '+e.message+'. This needs https and camera permission.';return}
@@ -358,21 +365,37 @@ function prepSet(){
 }
 function startSet(){
   const it=item();sess.cur={ex:it.ex,set:sess.set,target:it.reps,reps:0,good:0,faults:{},reps_detail:[],stopped_early:false};
-  sess.consecutiveBad=0;$('sMain').disabled=true;
+  sess.streak=0;sess.streakFault=null;sess.cueHeard={};$('sMain').disabled=true;
   sess.an=it.ex==='swing'?makeSwing(onRep):makeGoblet(onRep);
   let n=3;const c=$('sCount');c.classList.add('on');c.textContent=n;say('Three');
   const tick=setInterval(()=>{n--;if(n>0){c.textContent=n;say(n===2?'Two':'One')}else{clearInterval(tick);c.textContent='Go';say(it.ex==='swing'?'Hike and swing':'Go');setTimeout(()=>c.classList.remove('on'),500);
     sess.active=true;sess.lastRepT=performance.now();$('sMain').disabled=false;$('sMain').textContent='Set done'}},900);
 }
+// Speak a fault cue without cutting Ren off, and remember when it will have been heard.
+function cue(f){
+  const t=performance.now(),txt=CUES[f];
+  const silent=S.mute||!('speechSynthesis' in window);
+  if(silent){if(sess.cueHeard[f]==null)sess.cueHeard[f]=t;return} // on mute the on-screen cue is the cue
+  if(say(txt,{interrupt:false,ifQuiet:true,rate:1.05})&&sess.cueHeard[f]==null)sess.cueHeard[f]=t+500+txt.split(' ').length*380;
+}
+// Early stop: the same fault on 3 reps in a row, each started after the cue for it was heard.
+function judgeRep(st,r,now){
+  const f0=r.faults.length?(r.faults.includes(st.streakFault)?st.streakFault:r.faults[0]):null;
+  if(!f0){st.streak=0;st.streakFault=null;return{f0,stop:false}}
+  const heard=st.cueHeard[f0],counts=heard!=null&&heard<=(r.t0??now);
+  st.streak=counts?(st.streakFault===f0?st.streak:0)+1:0;st.streakFault=f0;
+  return{f0,stop:st.streak>=3};
+}
 function onRep(r){
-  if(!sess||!sess.active)return;const c=sess.cur;c.reps++;sess.lastRepT=performance.now();
-  if(!r.faults.length){c.good++;sess.consecutiveBad=0}else{sess.consecutiveBad++;for(const f of r.faults)c.faults[f]=(c.faults[f]||0)+1}
+  if(!sess||!sess.active)return;const c=sess.cur,now=performance.now();c.reps++;sess.lastRepT=now;
+  if(!r.faults.length)c.good++;else for(const f of r.faults)c.faults[f]=(c.faults[f]||0)+1;
   c.reps_detail.push({n:c.reps,faults:r.faults,...r.m});
   $('sReps').textContent=c.reps;
-  const v=$('sVerdict');v.className='verdict '+(r.faults.length?'bad':'ok');v.textContent=r.faults.length?'Fix: '+CUES[r.faults[0]]:'Clean rep';
-  if(sess.consecutiveBad>=3){say('Stop there. Park the bell. Form went.');c.stopped_early='three reps in a row with '+FULL[r.faults[0]];endSet();return}
+  const{f0,stop}=judgeRep(sess,r,now);
+  const v=$('sVerdict');v.className='verdict '+(f0?'bad':'ok');v.textContent=f0?'Fix: '+CUES[f0]:'Clean rep';
+  if(stop){say('Stop there. Park the bell. Form went.');c.stopped_early='three reps in a row with '+FULL[f0]+', after being cued';endSet();return}
   if(c.reps>=c.target){say(`${c.reps}. Park it.`);endSet();return}
-  if(r.faults.length)say(CUES[r.faults[0]]);else if(!speaking())say(String(c.reps),{interrupt:false,rate:1.15});
+  if(f0)cue(f0);else say(String(c.reps),{interrupt:false,ifQuiet:true,rate:1.15});
 }
 async function endSet(){
   if(!sess.active)return;sess.active=false;const c=sess.cur;sess.log.push(c);
@@ -419,12 +442,19 @@ function onResults(res){
   const L=res.poseLandmarks,mirror=facing==='user',t=performance.now();
   ctx.save();if(mirror){ctx.translate(W,0);ctx.scale(-1,1)}ctx.drawImage(res.image,0,0,W,H);ctx.restore();
   if(!sess)return;
-  if(!L){if(sess.active&&t-sess.lastSeen>2500&&t-sess.lastCue>6000){sess.lastCue=t;say('Step back. I need to see all of you, side-on.')}
-    if(!sess.active){$('sVerdict').className='verdict';$('sVerdict').textContent='Get in frame'}return}
-  const J=joints(L),vis=['s','h','k','a'].every(j=>J[j].v>.45);
-  if(!vis){if(!sess.active){$('sVerdict').className='verdict';$('sVerdict').textContent='Show your whole side'}return}
+  const J=L?joints(L):null,ok=!!J&&bodyOK(J);
+  if(!ok){
+    // Not scoring anything while the whole body isn't in the picture.
+    sess.okFrames=0;if(!sess.badSince)sess.badSince=t;
+    if(sess.active&&t-sess.badSince>600&&!sess.anReset){sess.an=item().ex==='swing'?makeSwing(onRep):makeGoblet(onRep);sess.anReset=true} // drop half-seen reps
+    $('sVerdict').className='verdict';$('sVerdict').textContent=L?'Show your whole side':'Get in frame';
+    if(sess.active&&t-sess.badSince>2000&&t-sess.lastCue>6000){sess.lastCue=t;say('Step back. I need to see all of you, side-on.',{interrupt:false,ifQuiet:true})}
+    return}
+  sess.badSince=0;sess.anReset=false;sess.okFrames=(sess.okFrames||0)+1;
+  if(sess.okFrames<6)return; // wait for a steady view before scoring
   sess.lastSeen=t;
-  if(!sess.active&&!sess.resting&&$('sVerdict').textContent!=='Ready'){$('sVerdict').className='verdict ok';$('sVerdict').textContent='Ready'}
+  const vt=$('sVerdict').textContent;
+  if(vt==='Show your whole side'||vt==='Get in frame'||(!sess.active&&!sess.resting&&vt!=='Ready')){$('sVerdict').className='verdict ok';$('sVerdict').textContent=sess.active?'Tracking you':'Ready'}
   let live=null;if(sess.active&&sess.an)live=sess.an.frame(J,t);
   if(sess.active&&sess.cur.reps>0&&t-sess.lastRepT>15000){sess.cur.stopped_early=false;endSet()}
   // skeleton
@@ -441,7 +471,7 @@ function onResults(res){
 
 /* ---------- boot ---------- */
 if(S.profile){setBell(S.profile.kg);goHome()}else{setBell(16);show('gate')}
-window.__kb={makeSwing,makeGoblet,joints,setWH:(w,h)=>{W=w;H=h}};
+window.__kb={makeSwing,makeGoblet,joints,bodyOK,judgeRep,setWH:(w,h)=>{W=w;H=h}};
 }
 </script>
 </body>
