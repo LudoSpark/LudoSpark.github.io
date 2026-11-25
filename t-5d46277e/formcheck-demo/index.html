@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Form Check</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* VOICE: a coach's clipboard, direct and readable at arm's length
+   IDEA: the sideline replay screen with a coach's markup drawn on the athlete
+   PICTURE: the live video itself with skeleton, joint angles and red/green limbs
+   COLOUR and TYPE: white ground, ink, signal green for correct, signal red for fix; Barlow Condensed readouts + Inter
+   LAYOUT: modest title, stage big on the left, verdict + readouts column on the right; stacks under 860px */
+:root{color-scheme:light dark;--bg:light-dark(#ffffff,#111315);--ink:light-dark(#121417,#eef0f2);--mute:light-dark(#5b6168,#9aa1a8);--line:light-dark(#e2e5e8,#2a2e33);--panel:light-dark(#f4f5f6,#1a1d20);--ok:#14995a;--bad:#e0322b;--warn:#e8a317;--stage:#0e1012}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Inter,system-ui,sans-serif;overflow-x:clip}
+h1,.num,.verdict{font-family:"Barlow Condensed",Inter,sans-serif;font-weight:700;letter-spacing:.01em}
+.band{padding:clamp(18px,3vw,40px) max(4vw,16px)}
+.band+.band{padding-top:20px}
+header{display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between;gap:12px 24px;padding-bottom:0}
+h1{font-size:clamp(32px,4.5vw,46px);line-height:1.05;margin:0}
+header p{margin:4px 0 0;color:var(--mute);max-width:60ch}
+.ex{display:flex;flex-wrap:wrap;gap:6px}
+.ex button,.btn{font:600 15px Inter,sans-serif;min-height:44px;padding:0 16px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+.ex button[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.btn.primary{background:var(--bad);border-color:var(--bad);color:#fff}
+button:focus-visible,label.btn:focus-within{outline:3px solid var(--warn);outline-offset:2px}
+main{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px;align-items:start}
+.stage{position:relative;background:var(--stage);border-radius:16px;overflow:hidden;aspect-ratio:16/10;display:grid;place-items:center}
+.stage canvas{width:100%;height:100%;object-fit:contain;display:block}
+.empty{position:absolute;inset:0;display:grid;place-items:center;text-align:center;color:#cfd4d9;padding:20px}
+.empty svg{width:min(220px,40%);height:auto}
+.empty p{margin:8px auto 0;max-width:42ch;font-size:15px}
+.src{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;align-items:center}
+.src input[type=file]{position:absolute;opacity:0;width:1px;height:1px}
+.src select{font:15px Inter,sans-serif;min-height:44px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:0 10px}
+.note{font-size:14px;color:var(--mute);margin:10px 0 0}
+.note.err{color:var(--bad)}
+aside{display:grid;gap:14px}
+.card{background:var(--panel);border-radius:14px;padding:16px}
+.verdict{font-size:40px;line-height:1;margin:0}
+.verdict.ok{color:var(--ok)}.verdict.bad{color:var(--bad)}.verdict.idle{color:var(--mute)}
+.cues{margin:10px 0 0;padding:0;list-style:none;display:grid;gap:6px}
+.cues li{padding-left:14px;position:relative;font-weight:500}
+.cues li::before{content:"";position:absolute;left:0;top:.55em;width:7px;height:7px;border-radius:50%;background:var(--bad)}
+.cues li.ok::before{background:var(--ok)}
+.reps{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}
+.num{font-size:44px;line-height:1}
+.lbl{font-size:13px;color:var(--mute)}
+.meter{margin-top:12px}
+.meter .row{display:flex;justify-content:space-between;font-size:14px}
+.meter .row b{font-variant-numeric:tabular-nums;white-space:nowrap}
+.bar{position:relative;height:10px;border-radius:5px;background:var(--line);margin-top:4px;overflow:hidden}
+.bar i{position:absolute;top:0;bottom:0;border-radius:5px}
+.bar .zone{background:color-mix(in srgb,var(--ok) 30%,transparent)}
+.bar .pt{width:4px;margin-left:-2px;background:var(--ink)}
+.how{font-size:14px;color:var(--mute);margin:0}
+@media(max-width:860px){main{grid-template-columns:minmax(0,1fr)}.stage{aspect-ratio:4/5}}
+@media(prefers-reduced-motion:no-preference){.verdict{transition:color .2s}}
+</style>
+</head>
+<body>
+<header class="band">
+  <div>
+    <h1>Form check</h1>
+    <p>Film from the side, whole body in frame. The skeleton turns red where form breaks; cues and rep quality update every frame.</p>
+  </div>
+  <div class="ex" id="ex" role="group" aria-label="Exercise"></div>
+</header>
+<div class="band">
+<main>
+  <section>
+    <div class="stage" id="stage">
+      <canvas id="cv" width="1280" height="800"></canvas>
+      <div class="empty" id="empty">
+        <div>
+          <svg viewBox="0 0 200 200" aria-hidden="true" fill="none" stroke-linecap="round" stroke-width="7">
+            <circle cx="112" cy="40" r="14" stroke="#cfd4d9"/>
+            <path d="M108 58 L88 112" stroke="#14995a"/><path d="M88 112 L128 128" stroke="#14995a"/><path d="M128 128 L112 178" stroke="#14995a"/>
+            <path d="M104 70 L140 92" stroke="#cfd4d9"/><path d="M112 178 L136 178" stroke="#cfd4d9"/>
+            <g fill="#fff" stroke="none"><circle cx="88" cy="112" r="6"/><circle cx="128" cy="128" r="6"/><circle cx="112" cy="178" r="6"/></g>
+            <path d="M104 118 A18 18 0 0 1 112 102" stroke="#e8a317" stroke-width="3"/>
+          </svg>
+          <p>Start the camera, or load a clip from your phone. Nothing is uploaded: analysis runs in this browser.</p>
+        </div>
+      </div>
+    </div>
+    <div class="src">
+      <button class="btn primary" id="camBtn" type="button">Use camera</button>
+      <label class="btn" style="display:inline-flex;align-items:center">Load video<input type="file" id="file" accept="video/*"></label>
+      <select id="speed" aria-label="Playback speed"><option value="1">1× speed</option><option value="0.5">0.5× speed</option><option value="0.25">0.25× speed</option></select>
+      <button class="btn" id="resetBtn" type="button">Reset reps</button>
+    </div>
+    <p class="note" id="note">Loading pose model…</p>
+  </section>
+  <aside>
+    <div class="card" aria-live="polite">
+      <p class="verdict idle" id="verdict">Waiting</p>
+      <ul class="cues" id="cues"></ul>
+    </div>
+    <div class="card reps">
+      <div><div class="num" id="rGood">0</div><div class="lbl">Good reps</div></div>
+      <div><div class="num" id="rBad">0</div><div class="lbl">Flagged</div></div>
+      <div><div class="num" id="rTime">0</div><div class="lbl" id="rTimeL">Rep total</div></div>
+    </div>
+    <div class="card" id="meters"></div>
+    <div class="card"><p class="how" id="how"></p></div>
+  </aside>
+</main>
+</div>
+<video id="vid" playsinline muted style="display:none"></video>
+<script>
+{
+const $=id=>document.getElementById(id);
+const cv=$('cv'),ctx=cv.getContext('2d'),vid=$('vid');
+const BASE=location.protocol==='file:'?'https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/':'';
+const deg=r=>r*180/Math.PI;
+let W=1280,H=800;
+const P=(L,i)=>({x:L[i].x*W,y:L[i].y*H,v:L[i].visibility??1});
+const ang=(a,b,c)=>{const v1=Math.atan2(a.y-b.y,a.x-b.x),v2=Math.atan2(c.y-b.y,c.x-b.x);let d=Math.abs(deg(v1-v2));return d>180?360-d:d};
+const fromVert=(a,b,down)=>{const dx=b.x-a.x,dy=b.y-a.y;const d=deg(Math.atan2(Math.abs(dx),down?dy:-dy));return Math.abs(d)};
+const lineSide=(a,b,p)=>{const t=(p.x-a.x)/((b.x-a.x)||1e-6);return p.y-(a.y+t*(b.y-a.y))};
+const IDX={L:{s:11,e:13,w:15,h:23,k:25,a:27},R:{s:12,e:14,w:16,h:24,k:26,a:28}};
+
+const EX={
+ squat:{name:'Squat',how:'Side view. Counts a rep when the knee bends past 120° and returns above 160°. Good rep: knee angle reaches 100° or less (thighs near parallel) with the torso within 50° of vertical.',
+  joints:['s','h','k','a'],repKey:'knee',down:120,up:160,good:100,
+  eval(J){const knee=ang(J.h,J.k,J.a),hip=ang(J.s,J.h,J.k),lean=fromVert(J.h,J.s,false);const bad=[],cues=[];
+   if(lean>50){bad.push('s','h');cues.push(`Chest up: torso leaning ${lean|0}°`)}
+   return{vals:{knee,hip,lean},bad,cues,meters:[['Knee angle',knee,40,180,60,100],['Torso lean',lean,0,90,0,50],['Hip angle',hip,30,180,45,180]],labels:[['k',knee],['h',hip]]}}},
+ pushup:{name:'Push-up',how:'Side view. Counts a rep when the elbow bends past 110° and locks out above 155°. Good rep: elbow reaches 95° or less while shoulder, hip and ankle stay in a straight line (160° or more).',
+  joints:['s','e','w','h','a'],repKey:'elbow',down:110,up:155,good:95,
+  eval(J){const elbow=ang(J.s,J.e,J.w),body=ang(J.s,J.h,J.a);const bad=[],cues=[];
+   if(body<160){bad.push('h');cues.push(lineSide(J.s,J.a,J.h)>0?`Hips sagging: body line ${body|0}°`:`Hips too high: body line ${body|0}°`)}
+   return{vals:{elbow,body},bad,cues,meters:[['Elbow angle',elbow,40,180,60,95],['Body line',body,120,180,160,180]],labels:[['e',elbow],['h',body]]}}},
+ plank:{name:'Plank',how:'Side view. The hold timer only runs while shoulder, hip and ankle form a straight line (165° or more). Sagging or piked hips stop the clock.',
+  joints:['s','e','h','a'],hold:true,
+  eval(J){const body=ang(J.s,J.h,J.a);const bad=[],cues=[];
+   if(body<165){bad.push('h');cues.push(lineSide(J.s,J.a,J.h)>0?`Hips sagging: body line ${body|0}°`:`Hips too high: body line ${body|0}°`)}
+   return{vals:{body},bad,cues,meters:[['Body line',body,120,180,165,180]],labels:[['h',body]]}}},
+ curl:{name:'Biceps curl',how:'Side view, working arm nearest the camera. Counts a rep when the elbow closes past 70° and opens above 150°. Good rep: elbow closes to 50° or less while the upper arm stays within 25° of vertical (no swinging).',
+  joints:['s','e','w','h'],repKey:'elbow',down:70,up:150,good:50,
+  eval(J){const elbow=ang(J.s,J.e,J.w),drift=fromVert(J.s,J.e,true),lean=fromVert(J.h,J.s,false);const bad=[],cues=[];
+   if(drift>25){bad.push('e');cues.push(`Pin your elbow: upper arm ${drift|0}° off vertical`)}
+   if(lean>15){bad.push('h');cues.push(`Stop swinging: torso leaning ${lean|0}°`)}
+   return{vals:{elbow,drift,lean},bad,cues,meters:[['Elbow angle',elbow,20,180,20,50],['Upper arm drift',drift,0,90,0,25],['Torso lean',lean,0,45,0,15]],labels:[['e',elbow]]}}}
+};
+
+let cur='squat',st;
+const resetState=()=>{st={phase:'up',min:999,good:0,bad:0,hold:0,last:0,flagged:false,lastRep:null};render()};
+$('ex').innerHTML=Object.entries(EX).map(([k,e])=>`<button type="button" data-k="${k}" aria-pressed="${k===cur}">${e.name}</button>`).join('');
+$('ex').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;cur=b.dataset.k;for(const x of $('ex').children)x.setAttribute('aria-pressed',x===b);resetState()});
+
+function render(res){
+ const E=EX[cur];$('how').textContent=E.how;
+ $('rGood').textContent=E.hold?(st.hold/1000).toFixed(1):st.good;
+ $('rBad').textContent=E.hold?'–':st.bad;
+ $('rTime').textContent=E.hold?(st.flagged?'✕':'✓'):st.good+st.bad;
+ $('rTimeL').textContent=E.hold?'Holding':'Rep total';
+ $('rGood').nextElementSibling.textContent=E.hold?'Seconds held':'Good reps';
+ const v=$('verdict'),c=$('cues');
+ if(!res){v.className='verdict idle';v.textContent=res===null?'No body found':'Waiting';c.innerHTML=res===null?'<li>Step back so head to feet are in frame, side-on</li>':'';$('meters').innerHTML='<p class="how">Joint angles appear here once a body is detected.</p>';return}
+ const cues=[...res.cues];if(st.lastRep)cues.push(st.lastRep);
+ v.className='verdict '+(res.cues.length?'bad':'ok');v.textContent=res.cues.length?'Fix form':'Good form';
+ c.innerHTML=cues.map(t=>`<li class="${t.startsWith('Last rep: good')||t.startsWith('Hold')?'ok':''}">${t.replace(/[<>&]/g,'')}</li>`).join('');
+ $('meters').innerHTML=res.meters.map(([n,val,lo,hi,a,b])=>{const p=x=>Math.max(0,Math.min(100,(x-lo)/(hi-lo)*100));return`<div class="meter"><div class="row"><span>${n}</span><b>${val|0}°</b></div><div class="bar"><i class="zone" style="left:${p(a)}%;width:${p(b)-p(a)}%"></i><i class="pt" style="left:${p(val)}%"></i></div></div>`}).join('');
+}
+
+function analyse(L,t){
+ const sc=s=>['s','h','k','a','e','w'].reduce((n,j)=>n+(L[IDX[s][j]].visibility||0),0);
+ const side=sc('L')>=sc('R')?'L':'R',E=EX[cur],J={};
+ for(const j of Object.keys(IDX[side]))J[j]=P(L,IDX[side][j]);
+ if(E.joints.some(j=>J[j].v<.45))return{side,J,res:null};
+ const r=E.eval(J);
+ if(E.hold){const dt=st.last?Math.min(t-st.last,200):0;st.flagged=r.cues.length>0;if(!st.flagged)st.hold+=dt;st.last=t;st.lastRep=st.flagged?null:'Hold steady, line is good'}
+ else{const a=r.vals[E.repKey];
+  if(st.phase==='up'&&a<E.down){st.phase='down';st.min=a;st.flagged=false}
+  if(st.phase==='down'){st.min=Math.min(st.min,a);if(r.cues.length)st.flagged=true;
+   if(a>E.up){st.phase='up';const deep=st.min<=E.good;
+    if(deep&&!st.flagged){st.good++;st.lastRep=`Last rep: good (${st.min|0}°)`}
+    else{st.bad++;st.lastRep=`Last rep flagged: ${!deep?`not deep enough (${st.min|0}°, target ${E.good}°)`:'form broke during the rep'}`}}
+   else if(a>st.min+15&&st.min>E.good)r.cues.push(`Go deeper: reached ${st.min|0}°, target ${E.good}°`)}}
+ return{side,J,res:r};
+}
+
+const BONES=[['s','e'],['e','w'],['s','h'],['h','k'],['k','a']];
+function draw(img,L,out){
+ const mirror=src==='cam';
+ ctx.save();if(mirror){ctx.translate(W,0);ctx.scale(-1,1)}ctx.drawImage(img,0,0,W,H);ctx.restore();
+ if(!L)return;
+ const X=p=>mirror?W-p.x:p.x,lw=Math.max(4,W/200);
+ ctx.lineCap='round';
+ const ghost=[[11,12],[23,24],[11,23],[12,24],[11,13],[13,15],[12,14],[14,16],[23,25],[25,27],[24,26],[26,28]];
+ ctx.strokeStyle='rgba(255,255,255,.35)';ctx.lineWidth=lw*.6;
+ for(const[a,b]of ghost){const p=P(L,a),q=P(L,b);if(p.v<.3||q.v<.3)continue;ctx.beginPath();ctx.moveTo(X(p),p.y);ctx.lineTo(X(q),q.y);ctx.stroke()}
+ if(!out.res)return;const{J,res}=out,bad=new Set(res.bad),used=new Set(EX[cur].joints);
+ ctx.lineWidth=lw*1.6;
+ for(const[a,b]of BONES){if(!used.has(a)||!used.has(b))continue;ctx.strokeStyle=bad.has(a)||bad.has(b)?'#e0322b':'#14995a';ctx.beginPath();ctx.moveTo(X(J[a]),J[a].y);ctx.lineTo(X(J[b]),J[b].y);ctx.stroke()}
+ for(const j of used){ctx.fillStyle=bad.has(j)?'#e0322b':'#fff';ctx.beginPath();ctx.arc(X(J[j]),J[j].y,lw*1.4,0,7);ctx.fill()}
+ const fs=Math.max(16,W/45);ctx.font=`700 ${fs}px "Barlow Condensed",sans-serif`;ctx.textBaseline='middle';
+ for(const[j,val]of res.labels){const t=`${val|0}°`,w=ctx.measureText(t).width+fs*.6,x=X(J[j])+fs*.9,y=J[j].y-fs*.9;
+  ctx.fillStyle='rgba(14,16,18,.82)';ctx.beginPath();ctx.roundRect(x,y-fs*.65,w,fs*1.3,fs*.3);ctx.fill();ctx.fillStyle='#e8a317';ctx.fillText(t,x+fs*.3,y)}
+}
+
+let pose,src=null,busy=false,ready=false;
+const note=(t,err)=>{$('note').textContent=t;$('note').className='note'+(err?' err':'')};
+function loadScript(u){return new Promise((ok,no)=>{const s=document.createElement('script');s.src=u;s.onload=ok;s.onerror=no;document.head.appendChild(s)})}
+const A={};
+function patchNet(){
+ for(const k in window.__A){const s=atob(window.__A[k]),u=new Uint8Array(s.length);for(let i=0;i<s.length;i++)u[i]=s.charCodeAt(i);A[k]=u}delete window.__A;
+ const hit=u=>A[String(u).split(/[?#]/)[0].split('/').pop()];
+ const rf=window.fetch.bind(window);window.fetch=(u,o)=>{const a=hit(u&&u.url||u);return a?Promise.resolve(new Response(a.slice().buffer)):rf(u,o)};
+ const RX=window.XMLHttpRequest;window.XMLHttpRequest=function(){const x=new RX();let h=null;const op=x.open.bind(x),sd=x.send.bind(x);
+  x.open=(m,u,...r)=>{h=hit(u);if(!h)op(m,u,...r)};
+  x.send=b=>{if(!h)return sd(b);const buf=h.slice().buffer;Object.defineProperty(x,'status',{value:200});Object.defineProperty(x,'readyState',{value:4});Object.defineProperty(x,'response',{value:buf});
+   setTimeout(()=>{const ev={loaded:buf.byteLength,total:buf.byteLength,lengthComputable:true};x.onprogress&&x.onprogress(ev);x.onload&&x.onload(ev);x.onreadystatechange&&x.onreadystatechange(ev)})};return x};
+}
+(BASE?Promise.resolve():Promise.all([0,1,2].map(i=>loadScript('asset'+i+'.js'))).then(patchNet)).then(()=>loadScript(BASE+'pose.js')).then(async()=>{
+ pose=new Pose({locateFile:f=>BASE+f});
+ pose.setOptions({modelComplexity:1,smoothLandmarks:true,minDetectionConfidence:.5,minTrackingConfidence:.5});
+ pose.onResults(r=>{const L=r.poseLandmarks;const out=L?analyse(L,performance.now()):null;draw(r.image,L,out||{});render(out?out.res:null)});
+ await pose.initialize();ready=true;note('Model ready. Start the camera or load a clip.');
+}).catch(e=>note('Could not load the pose model: '+e,true));
+
+function size(){W=vid.videoWidth||1280;H=vid.videoHeight||800;cv.width=W;cv.height=H;$('stage').style.aspectRatio=`${W}/${H}`}
+async function loop(){
+ if(src&&ready&&!busy&&vid.readyState>=2&&!vid.paused){busy=true;try{await pose.send({image:vid})}catch(e){}busy=false}
+ if(src)requestAnimationFrame(loop);
+}
+function stop(){if(vid.srcObject){vid.srcObject.getTracks().forEach(t=>t.stop());vid.srcObject=null}vid.pause();src=null}
+$('camBtn').addEventListener('click',async()=>{
+ try{const s=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:1280},height:{ideal:720}},audio:false});
+  stop();vid.srcObject=s;src='cam';await vid.play();size();$('empty').hidden=true;resetState();note('Live. Stand side-on, 2–3 m from the camera.');loop()}
+ catch(e){note('Camera is blocked here. Inside the Claude viewer, use “Load video” with a clip you filmed, or open this page as a file in Chrome for live camera.',true)}
+});
+$('file').addEventListener('change',async e=>{
+ const f=e.target.files[0];if(!f)return;stop();vid.src=URL.createObjectURL(f);vid.loop=false;src='file';
+ vid.playbackRate=+$('speed').value;await vid.play().catch(()=>{});size();$('empty').hidden=true;resetState();note(`Analysing ${f.name.replace(/[<>&]/g,'')}`);loop();
+});
+vid.addEventListener('ended',()=>{if(src==='file'){note(`Clip finished: ${st.good} good, ${st.bad} flagged. Load another or press play again.`);src=null}});
+$('stage').addEventListener('click',()=>{if(vid.src&&!vid.srcObject){if(vid.paused||vid.ended){src='file';vid.play();loop()}else vid.pause()}});
+$('speed').addEventListener('change',()=>{vid.playbackRate=+$('speed').value});
+$('resetBtn').addEventListener('click',resetState);
+resetState();
+}
+</script>
+</body>
+</html>

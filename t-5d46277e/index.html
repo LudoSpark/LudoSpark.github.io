@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#151515">
+<title>Ren · Kettlebell</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--iron:#151515;--iron2:#222;--chalk:#f2f2ef;--mute:#8c8c88;--bell:#f2c200;--ok:#20b26b;--bad:#ff4b3e;--line:#2e2e2e;--r:16px}
+*{box-sizing:border-box;min-width:0;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--iron);color:var(--chalk);font:16px/1.5 Inter,system-ui,sans-serif;overflow-x:clip}
+h1,h2,.big,.ex-name{font-family:"Archivo Narrow",Inter,sans-serif;font-weight:700;letter-spacing:.01em}
+button{font:600 16px Inter,sans-serif;min-height:48px;border-radius:12px;border:0;padding:0 18px;cursor:pointer;color:var(--chalk);background:var(--iron2)}
+button.go{background:var(--bell);color:#151515}
+button.ghost{background:transparent;border:1px solid var(--line)}
+button:disabled{opacity:.45}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--bell);outline-offset:2px}
+input,select,textarea{font:16px Inter,sans-serif;width:100%;min-height:48px;border-radius:12px;border:1px solid var(--line);background:var(--iron2);color:var(--chalk);padding:10px 12px}
+textarea{min-height:72px;resize:vertical}
+label{display:grid;gap:6px;font-size:14px;color:var(--mute)}
+.screen{display:none;min-height:100%;padding:max(16px,env(safe-area-inset-top)) 16px max(16px,env(safe-area-inset-bottom))}
+.screen.on{display:flex;flex-direction:column}
+.wrap{width:100%;max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:16px;flex:1}
+/* gate */
+.bellmark{width:84px;height:84px}
+#gate h1{font-size:44px;line-height:1.05;margin:8px 0 0}
+#gate p{color:var(--mute);margin:0}
+.weights{display:flex;flex-wrap:wrap;gap:8px}
+.weights button{min-width:58px;padding:0 10px;border:2px solid transparent}
+.weights button[aria-pressed=true]{border-color:var(--chalk)}
+.err{color:var(--bad);font-size:14px;min-height:1.2em;margin:0}
+/* home */
+.top{display:flex;align-items:center;gap:12px}
+.avatar{width:52px;height:52px;border-radius:50%;background:var(--bell);color:#151515;display:grid;place-items:center;font:700 26px "Archivo Narrow",sans-serif;flex:none}
+.top h2{margin:0;font-size:24px;line-height:1.1}
+.top .sub{color:var(--mute);font-size:14px}
+.top .menu{margin-left:auto;min-height:44px;padding:0 12px}
+.chat{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:4px 0;min-height:200px}
+.msg{max-width:85%;padding:10px 14px;border-radius:16px;white-space:pre-wrap;overflow-wrap:anywhere}
+.msg.ren{background:var(--iron2);align-self:flex-start;border-bottom-left-radius:4px}
+.msg.me{background:var(--bell);color:#151515;align-self:flex-end;border-bottom-right-radius:4px}
+.msg.sys{align-self:center;color:var(--mute);font-size:13px;background:none;padding:2px}
+.plan{background:var(--iron2);border-radius:var(--r);padding:14px 16px}
+.plan h3{margin:0 0 6px;font-size:13px;color:var(--mute);font-weight:500}
+.plan ol{margin:0;padding-left:20px}
+.plan li{font-weight:600}
+.plan li span{color:var(--mute);font-weight:400}
+.bar{display:flex;gap:8px;align-items:center}
+.bar input{flex:1}
+.bar .mic{width:48px;padding:0;flex:none}
+.mic.live{background:var(--bad)}
+.actions{display:grid;gap:8px}
+/* session */
+#session{padding:0;position:relative;height:100%;min-height:100dvh;background:#000}
+#cv{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.hud{position:absolute;left:0;right:0;top:0;padding:max(12px,env(safe-area-inset-top)) 14px 40px;background:linear-gradient(#000c,#0000);display:flex;align-items:flex-start;gap:12px}
+.ex-name{font-size:26px;line-height:1}
+.setinfo{color:#ddd;font-size:14px}
+.reps{margin-left:auto;text-align:right}
+.big{font-size:72px;line-height:.9;font-variant-numeric:tabular-nums}
+.reps .of{font-size:14px;color:#ddd}
+.dock{position:absolute;left:0;right:0;bottom:0;padding:40px 14px max(14px,env(safe-area-inset-bottom));background:linear-gradient(#0000,#000d);display:grid;gap:10px}
+.caption{font-size:18px;font-weight:500;min-height:2.4em;text-shadow:0 1px 3px #000}
+.caption b{color:var(--bell)}
+.verdict{display:inline-block;font:700 14px Inter,sans-serif;padding:3px 10px;border-radius:99px;background:#fff2}
+.verdict.ok{background:var(--ok);color:#06140d}.verdict.bad{background:var(--bad);color:#fff}
+.row{display:flex;gap:8px}
+.row button{flex:1}
+.row .mic,.row .sq{flex:none;width:52px;padding:0}
+.count{position:absolute;inset:0;display:none;place-items:center;font:700 160px "Archivo Narrow",sans-serif;color:var(--bell);text-shadow:0 4px 20px #000;pointer-events:none}
+.count.on{display:grid}
+.rest{font-variant-numeric:tabular-nums}
+.loading{position:absolute;inset:0;display:grid;place-items:center;color:#ccc;text-align:center;padding:24px}
+dialog{background:var(--iron2);color:var(--chalk);border:1px solid var(--line);border-radius:var(--r);width:min(92vw,480px);padding:18px}
+dialog::backdrop{background:#000a}
+dialog .actions{margin-top:14px}
+.small{font-size:13px;color:var(--mute)}
+@media(prefers-reduced-motion:no-preference){.msg{animation:in .25s ease-out}@keyframes in{from{opacity:0;transform:translateY(6px)}}}
+</style>
+</head>
+<body>
+
+<!-- GATE / ONBOARDING -->
+<section class="screen" id="gate">
+  <div class="wrap">
+    <svg class="bellmark" viewBox="0 0 84 84" aria-hidden="true"><path d="M27 34c-6-3-8-10-6-16 3-8 11-12 21-12s18 4 21 12c2 6 0 13-6 16" fill="none" stroke="var(--chalk)" stroke-width="7" stroke-linecap="round"/><ellipse cx="42" cy="54" rx="26" ry="24" fill="var(--bell)"/><ellipse cx="34" cy="47" rx="7" ry="5" fill="#fff5"/><rect x="26" y="74" width="32" height="6" rx="3" fill="#0006"/></svg>
+    <h1>Meet Ren, your kettlebell coach</h1>
+    <p>Ren watches your swings through the camera, talks you through every set, and remembers you between sessions. This is a private test.</p>
+    <label>Access code<input id="gCode" autocomplete="off" autocapitalize="off"></label>
+    <label>Your first name<input id="gName" autocomplete="given-name"></label>
+    <label>What do you want from training?<input id="gGoal" placeholder="e.g. get stronger, fix my back, lose a bit of weight"></label>
+    <label>Kettlebell experience<select id="gLevel"><option>Never used one</option><option>A few times</option><option>Train with them regularly</option></select></label>
+    <label>Anything Ren should know? (injuries, limits)<textarea id="gNotes" placeholder="Optional"></textarea></label>
+    <div><div class="small" style="margin-bottom:6px">Bell you'll use (kg)</div><div class="weights" id="gKg"></div></div>
+    <p class="err" id="gErr"></p>
+    <button class="go" id="gGo" type="button">Meet Ren</button>
+    <p class="small">Camera video stays on your phone; only rep numbers and what you type or say go to the trainer.</p>
+  </div>
+</section>
+
+<!-- HOME -->
+<section class="screen" id="home">
+  <div class="wrap">
+    <div class="top">
+      <div class="avatar" aria-hidden="true">R</div>
+      <div><h2>Ren</h2><div class="sub" id="hSub">Your coach</div></div>
+      <button class="ghost menu" id="hMenu" type="button" aria-label="Settings">Settings</button>
+    </div>
+    <div class="chat" id="chat" aria-live="polite"></div>
+    <div class="plan" id="plan" hidden><h3>Today's plan</h3><ol id="planList"></ol></div>
+    <div class="actions">
+      <button class="go" id="hCheck" type="button">Check in with Ren</button>
+      <button class="go" id="hStart" type="button" hidden>Start session</button>
+    </div>
+    <form class="bar" id="hForm">
+      <button class="mic" id="hMic" type="button" aria-label="Hold to talk" hidden>🎙</button>
+      <input id="hText" placeholder="Talk to Ren…" autocomplete="off">
+      <button type="submit">Send</button>
+    </form>
+  </div>
+</section>
+
+<!-- SESSION -->
+<section class="screen" id="session">
+  <canvas id="cv" width="720" height="1280"></canvas>
+  <div class="loading" id="sLoad">Starting camera and pose model…</div>
+  <div class="count" id="sCount"></div>
+  <div class="hud">
+    <div><div class="ex-name" id="sEx">Swing</div><div class="setinfo" id="sSet">Set 1 of 3 · 16 kg</div></div>
+    <div class="reps"><div class="big" id="sReps">0</div><div class="of" id="sOf">of 10</div></div>
+  </div>
+  <div class="dock">
+    <div><span class="verdict" id="sVerdict">Get in frame</span></div>
+    <div class="caption" id="sCap">Prop the phone side-on, 2 to 3 metres away, whole body in view.</div>
+    <div class="row">
+      <button class="mic" id="sMic" type="button" aria-label="Hold to talk" hidden>🎙</button>
+      <button class="go" id="sMain" type="button" disabled>Start set</button>
+      <button class="sq ghost" id="sFlip" type="button" aria-label="Switch camera">⟲</button>
+    </div>
+    <button class="ghost" id="sEnd" type="button">End session</button>
+  </div>
+</section>
+
+<dialog id="settings">
+  <h2 style="margin:0 0 10px">Settings</h2>
+  <label>Ren's voice<select id="stVoice"></select></label>
+  <label style="margin-top:10px">Bell weight (kg)<select id="stKg"></select></label>
+  <label style="margin-top:10px">Voice on<select id="stMute"><option value="1">Yes</option><option value="0">Muted (captions only)</option></select></label>
+  <div class="actions">
+    <button type="button" id="stTest">Test voice</button>
+    <button type="button" class="ghost" id="stReset">Forget me (delete all data on this phone)</button>
+    <button type="button" class="go" id="stClose">Done</button>
+  </div>
+</dialog>
+
+<script>
+{
+/* ---------- helpers & state ---------- */
+const $=id=>document.getElementById(id);
+const BELLS={8:'#ff7eb6',12:'#3d8bff',16:'#f2c200',20:'#a46bff',24:'#20b26b',28:'#ff8a1f',32:'#ff4b3e'};
+const KEY='kbcoach.v1';
+let S;
+try{S=JSON.parse(localStorage.getItem(KEY))||null}catch(e){S=null}
+S=S||{code:'',profile:null,notes:'',history:[],chat:[],plan:null,voice:'',mute:false};
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const show=id=>{for(const s of document.querySelectorAll('.screen'))s.classList.toggle('on',s.id===id)};
+const setBell=kg=>{document.documentElement.style.setProperty('--bell',BELLS[kg]||'#f2c200')};
+const EXN={swing:'Swing',goblet:'Goblet squat'};
+const DEFAULT_PLAN=[{ex:'swing',sets:3,reps:10,rest:60},{ex:'goblet',sets:2,reps:8,rest:60}];
+const clamp=(v,a,b,d)=>{v=Math.round(+v);return isFinite(v)?Math.min(b,Math.max(a,v)):d};
+const normPlan=p=>Array.isArray(p)?p.filter(x=>x&&EXN[x.ex]).slice(0,4).map(x=>({ex:x.ex,sets:clamp(x.sets,1,5,3),reps:clamp(x.reps,3,20,10),rest:clamp(x.rest,30,120,60)})):null;
+
+/* ---------- voice ---------- */
+let voices=[];
+const loadVoices=()=>{voices=(speechSynthesis.getVoices()||[]).filter(v=>/^en/i.test(v.lang));
+  $('stVoice').innerHTML=voices.map(v=>`<option value="${esc(v.name)}"${v.name===S.voice?' selected':''}>${esc(v.name)} (${esc(v.lang)})</option>`).join('')||'<option>Default</option>';
+  if(!S.voice){const pref=voices.find(v=>/Daniel|Arthur|Google UK English Male|Aaron|Samantha/.test(v.name))||voices[0];if(pref)S.voice=pref.name}};
+if('speechSynthesis' in window){loadVoices();speechSynthesis.onvoiceschanged=loadVoices}
+function say(text,{interrupt=true,rate=1.02}={}){
+  if(S.mute||!('speechSynthesis' in window)||!text)return;
+  if(interrupt)speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(text);const v=voices.find(v=>v.name===S.voice);if(v)u.voice=v;u.rate=rate;speechSynthesis.speak(u);
+}
+const speaking=()=>'speechSynthesis' in window&&speechSynthesis.speaking;
+
+/* ---------- speech input (where the browser supports it) ---------- */
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+function hookMic(btn,onText){
+  if(!SR)return;btn.hidden=false;let rec=null;
+  const start=e=>{e.preventDefault();if(rec)return;speechSynthesis.cancel();rec=new SR();rec.lang='en-GB';rec.interimResults=false;
+    rec.onresult=ev=>{const t=ev.results[0][0].transcript;if(t)onText(t)};rec.onend=()=>{btn.classList.remove('live');rec=null};
+    try{rec.start();btn.classList.add('live')}catch(err){rec=null}};
+  const stop=()=>{if(rec)rec.stop()};
+  btn.addEventListener('pointerdown',start);btn.addEventListener('pointerup',stop);btn.addEventListener('pointerleave',stop);
+}
+
+/* ---------- trainer API ---------- */
+// Your Cloudflare Worker address (see README). Ends in .workers.dev
+const API_URL='https://raspy-morning-cd5c.savcic-andrej.workers.dev/';
+async function ask(kind,context){
+  const r=await fetch(API_URL,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({code:S.code,kind,context})});
+  const j=await r.json().catch(()=>({error:'Bad reply'}));
+  if(!r.ok||j.error)throw new Error(j.error||('HTTP '+r.status));
+  return j;
+}
+const baseCtx=()=>({athlete:S.profile,coach_notes:S.notes||'(none yet)',
+  recent_sessions:S.history.slice(-5).map(h=>({date:h.date,summary:h.summary})),
+  days_since_last:S.history.length?Math.round((Date.now()-S.history.at(-1).t)/864e5):null,
+  local_time:new Date().toLocaleString('en-GB',{weekday:'long',hour:'2-digit',minute:'2-digit'}),
+  todays_plan:S.plan});
+
+/* ---------- chat ---------- */
+function addMsg(who,text){S.chat.push({who,text,t:Date.now()});S.chat=S.chat.slice(-40);save();renderChat()}
+function renderChat(){const c=$('chat');c.innerHTML=S.chat.map(m=>`<div class="msg ${m.who}">${esc(m.text)}</div>`).join('');c.scrollTop=c.scrollHeight}
+function renderPlan(){const p=S.plan;$('plan').hidden=!p;$('hStart').hidden=!p;$('hCheck').hidden=!!p;
+  if(p)$('planList').innerHTML=p.map(x=>`<li>${EXN[x.ex]} <span>${x.sets} × ${x.reps} · rest ${x.rest}s · ${S.profile.kg} kg</span></li>`).join('')}
+let busy=false;
+async function trainer(kind,extra,{speak=true}={}){
+  if(busy)return null;busy=true;const think=document.createElement('div');think.className='msg sys';think.textContent='Ren is thinking…';$('chat').append(think);
+  try{const r=await ask(kind,{...baseCtx(),...extra});think.remove();
+    if(r.say){addMsg('ren',r.say);if(speak)say(r.say)}
+    const np=normPlan(r.plan);if(np&&np.length){S.plan=np;save();renderPlan()}
+    return r}
+  catch(e){think.remove();addMsg('sys','Ren is unreachable: '+e.message);if(kind==='greet'&&!S.plan){S.plan=DEFAULT_PLAN;save();renderPlan();addMsg('sys','Using the starter plan so you can still train.')}return null}
+  finally{busy=false}
+}
+
+/* ---------- gate ---------- */
+let pickKg=S.profile?.kg||16;
+$('gKg').innerHTML=Object.keys(BELLS).map(k=>`<button type="button" data-kg="${k}" style="background:${BELLS[k]};color:#151515" aria-pressed="${+k===pickKg}">${k}</button>`).join('');
+$('gKg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;pickKg=+b.dataset.kg;setBell(pickKg);for(const x of $('gKg').children)x.setAttribute('aria-pressed',x===b)});
+$('gGo').addEventListener('click',async()=>{
+  const code=$('gCode').value.trim(),name=$('gName').value.trim();
+  if(!code||!name){$('gErr').textContent='Access code and name are needed.';return}
+  say(' ');$('gGo').disabled=true;$('gErr').textContent='';
+  S.code=code;
+  try{await ask('check',{})}catch(e){$('gErr').textContent=e.message;$('gGo').disabled=false;return}
+  S.profile={name,goal:$('gGoal').value.trim(),level:$('gLevel').value,notes:$('gNotes').value.trim(),kg:pickKg};
+  S.chat=[];S.plan=null;save();setBell(pickKg);goHome();
+  await trainer('greet',{first_meeting:true});
+});
+
+/* ---------- home ---------- */
+function goHome(){show('home');$('hSub').textContent=S.history.length?`${S.history.length} session${S.history.length>1?'s':''} together`:'Your coach';renderChat();renderPlan()}
+$('hCheck').addEventListener('click',()=>{say(' ');trainer('greet',{first_meeting:S.history.length===0&&S.chat.length===0})});
+const sendChat=t=>{t=t.trim();if(!t)return;addMsg('me',t);trainer('chat',{chat:S.chat.slice(-12).map(m=>({from:m.who==='me'?'athlete':m.who==='ren'?'coach':'system',text:m.text}))})};
+$('hForm').addEventListener('submit',e=>{e.preventDefault();const t=$('hText').value;$('hText').value='';say(' ');sendChat(t)});
+hookMic($('hMic'),sendChat);
+$('hStart').addEventListener('click',startSession);
+
+/* settings */
+const KGS=Object.keys(BELLS);
+$('hMenu').addEventListener('click',()=>{loadVoices();$('stKg').innerHTML=KGS.map(k=>`<option${+k===S.profile.kg?' selected':''}>${k}</option>`).join('');$('stMute').value=S.mute?'0':'1';$('settings').showModal()});
+$('stVoice').addEventListener('change',e=>{S.voice=e.target.value;save()});
+$('stKg').addEventListener('change',e=>{S.profile.kg=+e.target.value;setBell(S.profile.kg);save();renderPlan()});
+$('stMute').addEventListener('change',e=>{S.mute=e.target.value==='0';save()});
+$('stTest').addEventListener('click',()=>say(`Right, ${S.profile.name}. Hips back, bell between the knees, snap.`));
+$('stClose').addEventListener('click',()=>$('settings').close());
+let resetArm=false;
+$('stReset').addEventListener('click',e=>{if(!resetArm){resetArm=true;e.target.textContent='Tap again to delete everything';return}try{localStorage.removeItem(KEY)}catch(err){}location.reload()});
+
+/* ---------- pose geometry ---------- */
+let W=720,H=1280;
+const P=(L,i)=>({x:L[i].x*W,y:L[i].y*H,v:L[i].visibility??1});
+const deg=r=>r*180/Math.PI;
+const ang=(a,b,c)=>{let d=Math.abs(deg(Math.atan2(a.y-b.y,a.x-b.x)-Math.atan2(c.y-b.y,c.x-b.x)));return d>180?360-d:d};
+const IDX={L:{s:11,e:13,w:15,h:23,k:25,a:27,heel:29,toe:31},R:{s:12,e:14,w:16,h:24,k:26,a:28,heel:30,toe:32}};
+function joints(L){
+  const sc=s=>['s','h','k','a','w'].reduce((n,j)=>n+(L[IDX[s][j]].visibility||0),0);
+  const side=sc('L')>=sc('R')?'L':'R',J={};for(const j in IDX[side])J[j]=P(L,IDX[side][j]);
+  // which way the athlete faces (toe ahead of heel)
+  J.face=Math.sign((J.toe.x-J.heel.x)||1);
+  return J;
+}
+// torso angle from vertical, signed: + leaning forward, - leaning back
+const torso=J=>{const dx=(J.s.x-J.h.x)*J.face,dy=J.h.y-J.s.y;return deg(Math.atan2(dx,dy))};
+
+/* ---------- exercise analysers ---------- */
+// Each returns live readings per frame; reps are finalised inside and reported via onRep(rep)
+const CUES={squat:'Hips back, not down',lockout:'Finish tall, squeeze',leanback:"Stand tall, don't lean back",arms:'Arms loose, hips drive',low:'Snap the hips harder',depth:'Sit deeper',chest:'Chest up',far:'Bell tight to your chest'};
+const FULL={squat:'squatting the swing (knees bending too much at the bottom)',lockout:'not finishing the hips at the top',leanback:'leaning back at the top',arms:'lifting with the arms',low:'bell too low (not enough hip drive)',depth:'squat not deep enough',chest:'chest dropping forward',far:'bell drifting away from the chest'};
+function makeSwing(onRep){
+  let ph='top',bot=null,top=null,armed=false;
+  return{key:'hip',frame(J,t){
+    const hip=ang(J.s,J.h,J.k),knee=ang(J.h,J.k,J.a),lean=torso(J),elbow=ang(J.s,J.e,J.w);
+    if(ph==='top'){
+      if(top){ if(hip>top.maxHip){top.maxHip=hip;top.knee=knee;top.lean=lean}
+        if(J.w.y<top.wy){top.wy=J.w.y;top.elbow=elbow;top.mid=(J.h.y+J.s.y)/2}
+        if(t-top.t0>900||hip<150)finish()}
+      if(hip<135){ph='bot';bot={minHip:hip,knee,t0:t};armed=true}
+    }else{
+      if(hip<bot.minHip){bot.minHip=hip;bot.knee=knee}
+      if(hip>160){ph='top';top={t0:t,maxHip:hip,knee,lean,wy:J.w.y,elbow,mid:(J.h.y+J.s.y)/2}}
+    }
+    function finish(){if(!armed||!bot){top=null;return}const f=[];
+      if(bot.knee<125)f.push('squat');
+      if(top.maxHip<163)f.push('lockout');
+      if(top.lean<-12)f.push('leanback');
+      if(top.elbow<140)f.push('arms');
+      if(top.wy>top.mid+0.02*H)f.push('low');
+      onRep({faults:f,m:{bottom_hip:bot.minHip|0,bottom_knee:bot.knee|0,top_hip:top.maxHip|0}});armed=false;bot=null;top=null}
+    return{hip,knee,lean}}}
+}
+function makeGoblet(onRep){
+  let ph='up',rep=null;
+  return{key:'knee',frame(J,t){
+    const knee=ang(J.h,J.k,J.a),lean=Math.abs(torso(J)),tl=Math.hypot(J.s.x-J.h.x,J.s.y-J.h.y),far=Math.abs(J.w.x-J.s.x)/(tl||1);
+    if(ph==='up'&&knee<125){ph='down';rep={min:knee,lean:0,far:0}}
+    if(ph==='down'){rep.min=Math.min(rep.min,knee);rep.lean=Math.max(rep.lean,lean);rep.far=Math.max(rep.far,far);
+      if(knee>160){ph='up';const f=[];if(rep.min>100)f.push('depth');if(rep.lean>45)f.push('chest');if(rep.far>.6)f.push('far');
+        onRep({faults:f,m:{depth_knee:rep.min|0,max_lean:rep.lean|0}});rep=null}}
+    return{knee,lean}}}
+}
+
+/* ---------- session ---------- */
+const cv=$('cv'),ctx=cv.getContext('2d'),vid=document.createElement('video');vid.playsInline=true;vid.muted=true;
+let pose=null,poseReady=false,facing='user',stream=null,running=false;
+let sess=null; // {items, i, set, active, reps, an, log, consecutiveBad, lastRepT, restUntil}
+const BASE='';
+function loadScript(u){return new Promise((ok,no)=>{const s=document.createElement('script');s.src=u;s.onload=ok;s.onerror=no;document.head.appendChild(s)})}
+async function initPose(){
+  if(poseReady)return;
+  await loadScript(BASE+'pose.js');
+  pose=new Pose({locateFile:f=>BASE+f});
+  pose.setOptions({modelComplexity:1,smoothLandmarks:true,minDetectionConfidence:.5,minTrackingConfidence:.5});
+  pose.onResults(onResults);await pose.initialize();poseReady=true;
+}
+async function startCam(){
+  if(stream)stream.getTracks().forEach(t=>t.stop());
+  stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:facing,width:{ideal:720},height:{ideal:1280}},audio:false});
+  vid.srcObject=stream;await vid.play();W=vid.videoWidth;H=vid.videoHeight;cv.width=W;cv.height=H;
+}
+async function startSession(){
+  say(' ');
+  S.plan=S.plan||DEFAULT_PLAN;
+  sess={items:S.plan,i:0,set:1,active:false,reps:0,good:0,an:null,log:[],cur:null,consecutiveBad:0,lastRepT:0,lastSeen:0,lastCue:0,t0:Date.now()};
+  show('session');$('sLoad').hidden=false;$('sLoad').textContent='Starting camera and pose model…';
+  try{await Promise.all([initPose(),startCam()])}
+  catch(e){$('sLoad').textContent='Camera or model failed: '+e.message+'. This needs https and camera permission.';return}
+  $('sLoad').hidden=true;running=true;loop();prepSet();
+  say(`Phone side-on, two to three metres away, whole body in view. Tap start when you're set.`);
+}
+$('sFlip').addEventListener('click',async()=>{facing=facing==='user'?'environment':'user';try{await startCam()}catch(e){}});
+async function loop(){
+  if(!running)return;
+  if(poseReady&&vid.readyState>=2){try{await pose.send({image:vid})}catch(e){}}
+  requestAnimationFrame(loop);
+}
+const item=()=>sess.items[sess.i];
+function prepSet(){
+  const it=item();$('sEx').textContent=EXN[it.ex];$('sSet').textContent=`Set ${sess.set} of ${it.sets} · ${S.profile.kg} kg`;
+  $('sReps').textContent='0';$('sOf').textContent=`of ${it.reps}`;$('sMain').disabled=false;$('sMain').textContent=`Start set ${sess.set}`;
+}
+function startSet(){
+  const it=item();sess.cur={ex:it.ex,set:sess.set,target:it.reps,reps:0,good:0,faults:{},reps_detail:[],stopped_early:false};
+  sess.consecutiveBad=0;$('sMain').disabled=true;
+  sess.an=it.ex==='swing'?makeSwing(onRep):makeGoblet(onRep);
+  let n=3;const c=$('sCount');c.classList.add('on');c.textContent=n;say('Three');
+  const tick=setInterval(()=>{n--;if(n>0){c.textContent=n;say(n===2?'Two':'One')}else{clearInterval(tick);c.textContent='Go';say(it.ex==='swing'?'Hike and swing':'Go');setTimeout(()=>c.classList.remove('on'),500);
+    sess.active=true;sess.lastRepT=performance.now();$('sMain').disabled=false;$('sMain').textContent='Set done'}},900);
+}
+function onRep(r){
+  if(!sess||!sess.active)return;const c=sess.cur;c.reps++;sess.lastRepT=performance.now();
+  if(!r.faults.length){c.good++;sess.consecutiveBad=0}else{sess.consecutiveBad++;for(const f of r.faults)c.faults[f]=(c.faults[f]||0)+1}
+  c.reps_detail.push({n:c.reps,faults:r.faults,...r.m});
+  $('sReps').textContent=c.reps;
+  const v=$('sVerdict');v.className='verdict '+(r.faults.length?'bad':'ok');v.textContent=r.faults.length?'Fix: '+CUES[r.faults[0]]:'Clean rep';
+  if(sess.consecutiveBad>=3){say('Stop there. Park the bell. Form went.');c.stopped_early='three reps in a row with '+FULL[r.faults[0]];endSet();return}
+  if(c.reps>=c.target){say(`${c.reps}. Park it.`);endSet();return}
+  if(r.faults.length)say(CUES[r.faults[0]]);else if(!speaking())say(String(c.reps),{interrupt:false,rate:1.15});
+}
+async function endSet(){
+  if(!sess.active)return;sess.active=false;const c=sess.cur;sess.log.push(c);
+  const it=item();const last=sess.set>=it.sets;const nextItem=last?sess.items[sess.i+1]:it;
+  $('sMain').disabled=true;$('sMain').textContent='Ren is watching the replay…';
+  const summary={exercise:EXN[c.ex],set:c.set,of:it.sets,target:c.target,reps:c.reps,clean_reps:c.good,
+    faults:Object.fromEntries(Object.entries(c.faults).map(([k,n])=>[FULL[k],n])),rep_angles:c.reps_detail,stopped_early:c.stopped_early||false,bell_kg:S.profile.kg,
+    next:nextItem?(last?`next exercise: ${EXN[nextItem.ex]} ${nextItem.sets}x${nextItem.reps}`:`set ${sess.set+1} of ${it.sets}`):'that was the last set',rest_seconds:it.rest};
+  let line=`${c.good} clean out of ${c.reps}.`;
+  try{const r=await ask('set',{...baseCtx(),set_result:summary});if(r.say)line=r.say}catch(e){}
+  $('sCap').textContent=line;say(line);
+  if(last){sess.i++;sess.set=1}else sess.set++;
+  if(sess.i>=sess.items.length){$('sMain').textContent='Finish session';$('sMain').disabled=false;$('sMain').onclick=null;sess.done=true;return}
+  // rest countdown
+  let left=it.rest;$('sMain').disabled=false;
+  const upd=()=>{$('sMain').innerHTML=`<span class="rest">Rest ${left}s</span> · tap to go`};upd();
+  clearInterval(sess.restT);sess.restT=setInterval(()=>{left--;if(left===10)say('Ten seconds.',{interrupt:false});if(left<=0){clearInterval(sess.restT);prepSet();say('Up you get.',{interrupt:false})}else upd()},1000);
+  sess.resting=true;
+}
+$('sMain').addEventListener('click',()=>{
+  if(!sess)return;
+  if(sess.done)return finishSession();
+  if(sess.active)return endSet();
+  if(sess.resting){clearInterval(sess.restT);sess.resting=false;prepSet()}
+  startSet();
+});
+$('sEnd').addEventListener('click',()=>{if(sess&&sess.active){sess.active=false;sess.log.push(sess.cur)}finishSession()});
+hookMic($('sMic'),async t=>{addMsg('me',t);$('sCap').textContent='…';try{const r=await ask('chat',{...baseCtx(),during_session:true,chat:S.chat.slice(-8).map(m=>({from:m.who==='me'?'athlete':'coach',text:m.text}))});if(r.say){addMsg('ren',r.say);$('sCap').textContent=r.say;say(r.say)}}catch(e){}});
+async function finishSession(){
+  running=false;clearInterval(sess?.restT);if(stream)stream.getTracks().forEach(t=>t.stop());stream=null;
+  const log=sess?sess.log:[],t0=sess?sess.t0:Date.now();sess=null;goHome();
+  if(!log.length){addMsg('sys','Session ended before any sets.');return}
+  const tot=log.reduce((a,c)=>(a.reps+=c.reps,a.good+=c.good,a),{reps:0,good:0});
+  const summary=log.map(c=>`${EXN[c.ex]} set ${c.set}: ${c.good}/${c.reps} clean${Object.keys(c.faults).length?', faults: '+Object.entries(c.faults).map(([k,n])=>FULL[k]+' x'+n).join(', '):''}${c.stopped_early?' (stopped early)':''}`).join('; ');
+  const r=await trainer('debrief',{session_sets:summary,minutes:Math.round((Date.now()-t0)/6e4)});
+  if(r&&typeof r.notes==='string')S.notes=r.notes.slice(0,800);
+  S.history.push({t:Date.now(),date:new Date().toISOString().slice(0,10),summary:`${tot.good}/${tot.reps} clean reps. ${summary}`.slice(0,600)});
+  S.history=S.history.slice(-30);S.plan=null;save();renderPlan();goHome();
+}
+
+/* ---------- per-frame: draw + analyse ---------- */
+const BONES=[['s','e'],['e','w'],['s','h'],['h','k'],['k','a']];
+function onResults(res){
+  const L=res.poseLandmarks,mirror=facing==='user',t=performance.now();
+  ctx.save();if(mirror){ctx.translate(W,0);ctx.scale(-1,1)}ctx.drawImage(res.image,0,0,W,H);ctx.restore();
+  if(!sess)return;
+  if(!L){if(sess.active&&t-sess.lastSeen>2500&&t-sess.lastCue>6000){sess.lastCue=t;say('Step back. I need to see all of you, side-on.')}
+    if(!sess.active){$('sVerdict').className='verdict';$('sVerdict').textContent='Get in frame'}return}
+  const J=joints(L),vis=['s','h','k','a'].every(j=>J[j].v>.45);
+  if(!vis){if(!sess.active){$('sVerdict').className='verdict';$('sVerdict').textContent='Show your whole side'}return}
+  sess.lastSeen=t;
+  if(!sess.active&&!sess.resting&&$('sVerdict').textContent!=='Ready'){$('sVerdict').className='verdict ok';$('sVerdict').textContent='Ready'}
+  let live=null;if(sess.active&&sess.an)live=sess.an.frame(J,t);
+  if(sess.active&&sess.cur.reps>0&&t-sess.lastRepT>15000){sess.cur.stopped_early=false;endSet()}
+  // skeleton
+  const X=p=>mirror?W-p.x:p.x,lw=Math.max(5,W/120),last=sess.cur?.reps_detail?.at(-1),bad=new Set(last&&sess.active?last.faults:[]);
+  const badJ={squat:['k'],lockout:['h'],leanback:['s','h'],arms:['e'],low:['w'],depth:['k'],chest:['s','h'],far:['w']};
+  const hot=new Set([...bad].flatMap(f=>badJ[f]||[]));
+  ctx.lineCap='round';ctx.lineWidth=lw;
+  for(const[a,b]of BONES){ctx.strokeStyle=hot.has(a)||hot.has(b)?'#ff4b3e':'#ffffffd0';ctx.beginPath();ctx.moveTo(X(J[a]),J[a].y);ctx.lineTo(X(J[b]),J[b].y);ctx.stroke()}
+  for(const j of['s','e','w','h','k','a']){ctx.fillStyle=hot.has(j)?'#ff4b3e':getComputedStyle(document.documentElement).getPropertyValue('--bell');ctx.beginPath();ctx.arc(X(J[j]),J[j].y,lw*1.1,0,7);ctx.fill()}
+  if(live){const fs=Math.max(22,W/22);ctx.font=`700 ${fs}px "Archivo Narrow",sans-serif`;ctx.textBaseline='middle';
+    const tag=(j,txt)=>{const x=X(J[j])+fs*.8,y=J[j].y-fs*.6,w=ctx.measureText(txt).width+fs*.6;ctx.fillStyle='#000b';ctx.beginPath();ctx.roundRect(x,y-fs*.65,w,fs*1.3,fs*.3);ctx.fill();ctx.fillStyle='#fff';ctx.fillText(txt,x+fs*.3,y)};
+    if(live.hip!=null)tag('h',`${live.hip|0}°`);tag('k',`${live.knee|0}°`)}
+}
+
+/* ---------- boot ---------- */
+if(S.profile){setBell(S.profile.kg);goHome()}else{setBell(16);show('gate')}
+window.__kb={makeSwing,makeGoblet,joints,setWH:(w,h)=>{W=w;H=h}};
+}
+</script>
+</body>
+</html>

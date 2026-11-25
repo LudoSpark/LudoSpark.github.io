@@ -1,0 +1,8 @@
+# Never push these to GitHub Pages (the repo is public).
+# The server part lives in Cloudflare; the PHP files are the old version.
+worker/
+api.php
+config.php
+persona.php
+.htaccess
+.dev.vars
